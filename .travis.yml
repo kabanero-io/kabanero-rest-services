@@ -1,0 +1,35 @@
+language: go
+go:
+  - 1.12
+
+services:
+  - docker
+
+
+
+before_install:
+#- mkdir -p ${HOME}/gopath/src/github.com/kabanero-io/kabanero-operator
+#- rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/kabanero-io/kabanero-operator
+#- export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kabanero-io/kabanero-operator
+#- cd ${HOME}/gopath/src/github.com/kabanero-io/kabanero-operator
+- if [ ! -z ${DOCKER_USERNAME} ]; then docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD || true; fi
+
+script:
+#- make check
+- make build-image
+
+deploy:
+- provider: script
+  script: make push-image
+  on:
+     tags: true
+     condition: ${DOCKER_USERNAME} && ${DOCKER_PASSWORD}
+- provider: script
+  script: make push-image
+  on:
+     branch: master
+     condition: ${DOCKER_USERNAME} && ${DOCKER_PASSWORD}
+
+cache:
+  directories:
+    - vendor 
