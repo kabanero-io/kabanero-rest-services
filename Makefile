@@ -19,7 +19,7 @@ IMAGE ?= kabanero-rest-services:latest
 .PHONY: build deploy deploy-olm build-image push-image int-test-install int-test-collections int-test-uninstall
 
 build: 
-	go install ./cmd/service
+	go install ./pkg/cmd/service
 
 build-image: build
   # These commands were taken from operator-sdk 0.8.1.  The sdk did not let us
