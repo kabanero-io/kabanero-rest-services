@@ -27,9 +27,9 @@ deploy:
 - provider: script
   script: make push-image
   on:
-     branch: master
+     all_branches: true
      condition: ${DOCKER_USERNAME} && ${DOCKER_PASSWORD}
 
-cache:
-  directories:
-    - vendor 
+#cache:
+#  directories:
+#    - vendor 
