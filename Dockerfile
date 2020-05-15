@@ -1,7 +1,7 @@
 # This is a workaround until manfistival can interact with the virtual file system
-ARG IMAGE=kabanero:latest
+#ARG IMAGE=kabanero-rest-services:latest
 
-FROM ${IMAGE}
+#FROM ${IMAGE}
 
 # The following labels are required for Redhat container certification
 LABEL vendor="Kabanero" \
