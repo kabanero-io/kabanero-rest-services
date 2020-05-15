@@ -1,4 +1,4 @@
-FROM FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
 # The following labels are required for Redhat container certification
 LABEL vendor="Kabanero" \
