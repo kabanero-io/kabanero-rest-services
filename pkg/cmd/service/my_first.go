@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Test comment
 func main () {
 	x := [5]int{10, 20, 30, 40, 50}
 	var a [5]int 
