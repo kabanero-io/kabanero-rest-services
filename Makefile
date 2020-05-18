@@ -3,7 +3,7 @@
 IMAGE ?= kabanero-rest-services:latest
 
 # Computed repository name (no tag) including repository host/path reference
-#REPOSITORY=$(firstword $(subst :, ,${IMAGE}))
+REPOSITORY=$(firstword $(subst :, ,${IMAGE}))
 
 # Internal Docker image in format repository:tag. Repository may contain an internal service reference.
 # Used for external push, and internal deployment pull
