@@ -9,9 +9,9 @@ LABEL vendor="Kabanero" \
 # The licence must be here for Redhat container certification
 COPY LICENSE /licenses/
 
-
+USER root
 COPY build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
 COPY build/bin /usr/local/bin
-USER root
+USER 1001
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
