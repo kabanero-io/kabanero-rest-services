@@ -18,8 +18,8 @@ REPOSITORY=$(firstword $(subst :, ,${IMAGE}))
 
 .PHONY: build deploy deploy-olm build-image push-image int-test-install int-test-collections int-test-uninstall
 
-build: generate
-    GO111MODULE=on go install ./pkg/cmd/main
+#build: generate
+#    GO111MODULE=on go install ./pkg/cmd/main
 #	go install ./pkg/cmd/main
 
 build-image: generate
