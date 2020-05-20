@@ -23,7 +23,7 @@ build:
 #	go install ./pkg/cmd/main
 
 build-image:
-	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -o build/_output/bin/kabanero-rest-services -gcflags "all=-trimpath=$(GOPATH)" -asmflags "all=-trimpath=$(GOPATH)" -ldflags "-X main.GitTag=$(TRAVIS_TAG) -X main.GitCommit=$(TRAVIS_COMMIT) -X main.GitRepoSlug=$(TRAVIS_REPO_SLUG) -X main.BuildDate=`date -u +%Y%m%d.%H%M%S`" github.com/kabanero-io/kabanero-rest-services/pkg/cmd/main
+	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -o build/_output/bin/kabanero-rest-services -gcflags "all=-trimpath=$(GOPATH)" -asmflags "all=-trimpath=$(GOPATH)" -ldflags "-X main.GitTag=$(TRAVIS_TAG) -X main.GitCommit=$(TRAVIS_COMMIT) -X main.GitRepoSlug=$(TRAVIS_REPO_SLUG) -X main.BuildDate=`date -u +%Y%m%d.%H%M%S`" github.com/davco01a/kabanero-rest-services/pkg/cmd/main
 	docker build -f build/Dockerfile -t ${IMAGE} .
   
   	
