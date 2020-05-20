@@ -12,7 +12,7 @@ COPY LICENSE /licenses/
 USER root
 RUN chmod -R 777 /usr/local/bin
 RUN echo 'right before copy of main.go'
-COPY build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
+COPY --chown=1001:0 build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
 COPY build/bin /usr/local/bin
 USER 1001
 
