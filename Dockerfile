@@ -10,7 +10,7 @@ LABEL vendor="Kabanero" \
 COPY LICENSE /licenses/
 
 USER root
-RUN chmod -R 777 /usr/local/bin/main
+RUN chmod -R 777 /usr/local/bin
 COPY build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
 COPY build/bin /usr/local/bin
 USER 1001
