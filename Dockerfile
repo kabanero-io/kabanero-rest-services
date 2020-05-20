@@ -10,7 +10,7 @@ LABEL vendor="Kabanero" \
 COPY LICENSE /licenses/
 
 
-COPY build/_output/bin/main /usr/local/bin/main
+COPY build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
 COPY build/bin /usr/local/bin
 USER root
 
