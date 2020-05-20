@@ -11,6 +11,7 @@ COPY LICENSE /licenses/
 
 USER root
 RUN chmod -R 777 /usr/local/bin
+COPY build/bin/entrypoint /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
 RUN echo 'right before copy of main.go'
 COPY build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
