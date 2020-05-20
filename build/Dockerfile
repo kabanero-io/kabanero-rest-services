@@ -11,10 +11,9 @@ COPY LICENSE /licenses/
 
 USER root
 RUN chmod -R 777 /usr/local/bin
-FROM golang AS build-stage
 RUN echo 'right before copy of main.go'
-COPY --from=build-stage build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
-COPY --from=build-stage build/bin /usr/local/bin
+COPY build/_output/bin/kabanero-rest-services/main /usr/local/bin/main
+COPY build/bin /usr/local/bin
 USER 1001
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
