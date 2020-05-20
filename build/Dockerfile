@@ -10,8 +10,8 @@ LABEL vendor="Kabanero" \
 COPY LICENSE /licenses/
 
 USER root
-RUN chmod -R 777 /usr/local/bin
 COPY build/bin /usr/local/bin
+RUN chmod -R 777 /usr/local/bin
 COPY build/bin/entrypoint /usr/local/bin/entrypoint
 
 RUN echo 'right before entrypoint stuff: '
