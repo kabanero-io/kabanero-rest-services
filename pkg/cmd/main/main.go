@@ -18,5 +18,6 @@ func handleRequests() {
 }
 
 func main() {
+	fmt.Println("entered main GO routine!")
     handleRequests()
 }
