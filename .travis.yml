@@ -9,6 +9,7 @@ services:
 
 before_install:
 - mkdir -p ${HOME}/gopath/src/github.com/kabanero-io/kabanero-rest-services
+- mkdir -p /usr/local/bin
 - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/kabanero-io/kabanero-rest-services
 - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/kabanero-io/kabanero-rest-services
 - cd ${HOME}/gopath/src/github.com/kabanero-io/kabanero-rest-services

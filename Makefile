@@ -18,13 +18,17 @@ REPOSITORY=$(firstword $(subst :, ,${IMAGE}))
 
 .PHONY: build deploy deploy-olm build-image push-image int-test-install int-test-collections int-test-uninstall
 
-build: 
-	go install ./pkg/cmd/main
+build:
+	GO111MODULE=on go install ./pkg/cmd/main
+#	go install ./pkg/cmd/main
 
-build-image: build
-  # These commands were taken from operator-sdk 0.8.1.  The sdk did not let us
-	docker build -f Dockerfile -t ${IMAGE} .
-  
+build-image:
+	$(info    TRAVIS_TAG is $(TRAVIS_TAG))
+	$(info    TRAVIS_REPO_SLUG is $(TRAVIS_REPO_SLUG))
+	$(info    TRAVIS_BRANCH is $(TRAVIS_BRANCH))
+	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -o build/_output/bin/kabanero-rest-services/main -gcflags "all=-trimpath=$(GOPATH)" -asmflags "all=-trimpath=$(GOPATH)" -ldflags "-X main.GitBranch=$(TRAVIS_BRANCH) -X main.GitTag=$(TRAVIS_TAG) -X main.GitCommit=$(TRAVIS_COMMIT) -X main.GitRepoSlug=$(TRAVIS_REPO_SLUG) -X main.BuildDate=`date -u +%Y%m%d.%H%M%S`" github.com/$(TRAVIS_REPO_SLUG)/pkg/cmd/main
+	docker build -f build/Dockerfile -t ${IMAGE} .
+
   	
 
 push-image:
