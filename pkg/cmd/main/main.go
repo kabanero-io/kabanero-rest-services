@@ -13,6 +13,7 @@ func homePage(w http.ResponseWriter, r *http.Request){
 }
 
 func handleRequests() {
+	fmt.Println("Another request!")
     http.HandleFunc("/", homePage)
     log.Fatal(http.ListenAndServe(":9443", nil))
 }
