@@ -4,7 +4,6 @@ import (
     "fmt"
     "log"
     "net/http"
-    "net/https"
 )
 
 // test rest endpoint
@@ -15,7 +14,7 @@ func homePage(w http.ResponseWriter, r *http.Request){
 
 func handleRequests() {
     http.HandleFunc("/", homePage)
-    log.Fatal(https.ListenAndServe(":9443", nil))
+    log.Fatal(http.ListenAndServe(":9443", nil))
 }
 
 func main() {
