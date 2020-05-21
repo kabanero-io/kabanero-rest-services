@@ -35,6 +35,7 @@ push-image:
 ifneq "$(IMAGE)" "kabanero-rest-services:latest"
   # Default push.  Make sure the namespace is there in case using local registry
 #	kubectl create namespace kabanero || true
+	$(info    IMAGE is $(IMAGE))
 	docker push $(IMAGE)
 
 ifdef TRAVIS_TAG
