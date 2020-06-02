@@ -13,7 +13,8 @@ COPY LICENSE /licenses/
 
 USER 1001
 RUN ls -l
+COPY cmd/kabanero-rest-services-server/main.go /usr/local/bin/main.go
 #RUN go run ./cmd/kabanero-rest-services-server/main.go --port 9443
-CMD ["go", "run", "cmd/kabanero-rest-services-server/main.go"] 
+CMD ["go", "run", "/usr/local/bin/main.go"] 
 
 
