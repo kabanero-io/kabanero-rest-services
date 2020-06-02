@@ -12,7 +12,7 @@ LABEL vendor="Kabanero" \
 COPY LICENSE /licenses/
 
 USER 1001
-
+RUN ls -l
 #RUN go run ./cmd/kabanero-rest-services-server/main.go --port 9443
 CMD ["go", "run", "cmd/kabanero-rest-services-server/main.go"] 
 
