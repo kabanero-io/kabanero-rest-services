@@ -13,8 +13,18 @@ COPY LICENSE /licenses/
 
 USER 1001
 RUN ls -l
-COPY cmd/kabanero-rest-services-server/main.go /usr/local/bin/main.go
+#COPY cmd/kabanero-rest-services-server/main.go /usr/local/bin/main.go
+
+ENV GOBIN $GOPATH/bin
+
+ADD . /go/src/github.com/kabanero-io/kabanero-rest-services
+RUN go install /go/src/github.com/kabanero-io/kabanero-rest-services/cmd/kabanero-rest-services-server/main
+WORKDIR /go/src/github.com/kabanero-io/kabanero-rest-services
+ENTRYPOINT /go/bin/main --port 9443
+EXPOSE 9443
+
 #RUN go run ./cmd/kabanero-rest-services-server/main.go --port 9443
-CMD ["go", "run", "/usr/local/bin/main.go"] 
+#CMD ["go", "run", "cmd/kabanero-rest-services-server/main.go"] 
+#CMD ["go", "run", "/usr/local/bin/main.go"] 
 
 
