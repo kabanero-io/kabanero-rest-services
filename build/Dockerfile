@@ -1,4 +1,5 @@
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
+FROM golang
 
 # The following labels are required for Redhat container certification
 LABEL vendor="Kabanero" \
@@ -12,6 +13,7 @@ COPY LICENSE /licenses/
 
 USER 1001
 
-RUN go run ./cmd/kabanero-rest-services-server/main.go --port 9443
+#RUN go run ./cmd/kabanero-rest-services-server/main.go --port 9443
+CMD ["go", "run", "cmd/kabanero-rest-services-server/main.go"] 
 
 
