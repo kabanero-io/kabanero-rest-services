@@ -20,7 +20,7 @@ RUN chmod +x /usr/local/bin/entrypoint
 
 
 RUN echo 'right before copy of main.go'
-COPY build/kabanero-rest-services /usr/local/bin/kabanero-rest-services
+COPY build/bin/kabanero-rest-services /usr/local/bin/kabanero-rest-services
 RUN chmod +x /usr/local/bin/kabanero-rest-services
 
 USER 1001
