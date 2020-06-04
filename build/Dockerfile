@@ -14,14 +14,14 @@ COPY build/bin /usr/local/bin
 RUN chmod -R 777 /usr/local/bin
 COPY build/bin/entrypoint /usr/local/bin/entrypoint
 
-RUN echo 'right before entrypoint stuff: '
-RUN ls -l /usr/local/bin/entrypoint
-RUN chmod +x /usr/local/bin/entrypoint
+# RUN echo 'right before entrypoint stuff: '
+# RUN ls -l /usr/local/bin/entrypoint
+# RUN chmod +x /usr/local/bin/entrypoint
 
 
 # RUN echo 'right before copy of main.go'
 # COPY build/bin/kabanero-rest-services /usr/local/bin/kabanero-rest-services
-# RUN chmod +x /usr/local/bin/kabanero-rest-services
+RUN chmod +x /usr/local/bin/kabanero-rest-services --port=9443
 
 USER 1001
 
