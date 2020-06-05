@@ -4,6 +4,7 @@ package restapi
 
 import (
 	"crypto/tls"
+	"log"
 	"net/http"
 
 	"github.com/go-openapi/swag"
@@ -64,8 +65,9 @@ func configureTLS(tlsConfig *tls.Config) {
 // This function can be called multiple times, depending on the number of serving schemes.
 // scheme value will be set accordingly: "http", "https" or "unix"
 func configureServer(s *http.Server, scheme, addr string) {
-	http.ListenAndServe(":9443", nil)
-	s.ListenAndServe()
+	// r := mux.NewRouter()
+	// r.HandleFunc("/test", MessageGetTestHandler).Methods("GET")
+	log.Fatal(http.ListenAndServe(":9443", nil))
 
 }
 
