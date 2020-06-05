@@ -4,7 +4,6 @@ package restapi
 
 import (
 	"crypto/tls"
-	"log"
 	"net/http"
 
 	"github.com/go-openapi/swag"
@@ -67,7 +66,7 @@ func configureTLS(tlsConfig *tls.Config) {
 func configureServer(s *http.Server, scheme, addr string) {
 	// r := mux.NewRouter()
 	// r.HandleFunc("/test", MessageGetTestHandler).Methods("GET")
-	log.Fatal(http.ListenAndServe(":9443", nil))
+	http.ListenAndServe(":9443", nil)
 
 }
 
