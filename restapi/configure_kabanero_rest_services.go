@@ -64,9 +64,6 @@ func configureTLS(tlsConfig *tls.Config) {
 // This function can be called multiple times, depending on the number of serving schemes.
 // scheme value will be set accordingly: "http", "https" or "unix"
 func configureServer(s *http.Server, scheme, addr string) {
-	// r := mux.NewRouter()
-	// r.HandleFunc("/test", MessageGetTestHandler).Methods("GET")
-	http.ListenAndServe(":9443", nil)
 
 }
 

@@ -2,4 +2,4 @@
 
 echo "hi"
 
-exec /usr/local/bin/kabanero-rest-services-server $@
+exec /usr/local/bin/kabanero-rest-services-server --port=9443 $@
