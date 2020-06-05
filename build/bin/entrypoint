@@ -1,3 +1,5 @@
 #!/bin/sh -e
 
+echo "hi"
+
 exec /usr/local/bin/kabanero-rest-services-server $@
