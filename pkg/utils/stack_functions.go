@@ -37,7 +37,7 @@ func listStacksInKabanero(k *kabanerov1alpha2.Kabanero) error {
 	var stackMapList []M
 	for _, deployedStack := range deployedStacks.Items {
 		stackMap := make(map[string]interface{})
-		stackMap["name"] = deployedStack.Spec.nameame
+		stackMap["name"] = deployedStack.Spec.name
 		var versionMapList []M
 		for _, dStackVersion := range deployedStack.Spec.Versions {
 			versionMap := make(map[string]string)
@@ -61,37 +61,60 @@ func listStacksInKabanero(k *kabanerov1alpha2.Kabanero) error {
 }
 
 func digestCheck(stack_digest string, cr_digest string, status string) {
-	digestCheck = "mismatched"
-		if stack_digest != nil && cr_digest != nil {
-			if stack_digest == cr_digest  {
-				digestCheck="matched";
-			} else if strings.contains(cr_digest.contains, "not found in container registry") {
-				digestCheck = imageDigest;
-				return digestCheck
-			}
-		} else {
-			fmt.Sprintf("Could not find one of the digests, stack digest %s, cr digest %s", stack_digest, cr_digest)
-			digestCheck="unknown"
+	digestCheck = "mismatched" 
+	if stack_digest != nil && cr_digest != nil {
+		if stack_digest == cr_digest  {
+			digestCheck="matched";
+		} else if strings.contains(cr_digest.contains, "not found in container registry") {
+			digestCheck = imageDigest;
 			return digestCheck
 		}
-		if status != nil {
-			if strings.contains(status, "active") {
-				statusRune := []rune(status)
-				shortStatus := string(statusRune[0:6])
-				if shortStatus != "active" {
-					digestCheck = "NA"
-				}
-			} else {
+	} else {
+		fmt.Sprintf("Could not find one of the digests, stack digest %s, cr digest %s", stack_digest, cr_digest)
+		digestCheck="unknown"
+		return digestCheck
+	} 
+	if status != nil {
+		if strings.contains(status, "active") {
+			statusRune := []rune(status)
+			shortStatus := string(statusRune[0:6])
+			if shortStatus != "active" {
 				digestCheck = "NA"
 			}
 		} else {
 			digestCheck = "NA"
 		}
+	} else { 
+		digestCheck = "NA"
+	}
 		
 	return digestCheck
 }
 
-func describeStack(k *kabanerov1alpha2.Kabanero) error {
+// this code may change to just use unstructured eventually
+	// e.g.
+	//
+	// func getCRWInstance(ctx context.Context, k *kabanerov1alpha2.Kabanero, c client.Client) (*unstructured.Unstructured, error) {
+	// 	crwInst := &unstructured.Unstructured{}
+	// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
+	// 		Kind:    "CheCluster",
+	// 		Group:   "org.eclipse.che",
+	// 		Version: "v1",
+	// 	})
+	// 	err := c.Get(ctx, client.ObjectKey{
+	// 		Name:      crwOperatorCRNameSuffix,
+	// 		Namespace: k.ObjectMeta.Namespace}, crwInst)
+	// 	return crwInst, err
+	// }
+	// server, found, err := unstructured.NestedFieldCopy(crwInst.Object, "spec", "server")
+
+	// stackInst := &unstructured.Unstructured{}
+	// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
+	// 		Kind:    "CheCluster",
+	// 		Group:   "org.eclipse.che",
+	// 		Version: "v1",
+	// 	})
+func describeStack(k *kabanerov1alpha2.Kabanero, name string, version string) error {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
 	deployedStacks := &kabanerov1alpha2.StackList{}
@@ -99,7 +122,29 @@ func describeStack(k *kabanerov1alpha2.Kabanero) error {
 	if err != nil {
 		return err
 	}
-	return deployedStacks
+	stackMap := make(map[string]interface{})
+	for _, deployedStack := range deployedStacks.Items {
+		stackName = deployedStack.Spec.name
+		if stackName == name {
+			for _, dStackVersion := range deployedStack.Spec.Versions {
+				if dStackVersion.Status.version = version {
+					stack_digest := dStackVersion.Images.digest.activation 
+					cr_digest := retrieveImageDigestFromCR(cl, namespace, imgRegistry , true, logr logr.Logger, imageName)
+				} 
+				stackMap["name"] = name
+				stackMap["version"] = version
+				stackMap["image"] = dStackVersion.Images.image
+				stackMap["status"] = dStackVersion.Status.status
+				stackMap["digestCheck"] = digestCheck(stack_digest, cr_digest, status)
+			//msg.put("git repo url", repoUrl);  
+				stackMap["stack digest"] = stack_digest
+				stackMap["cr image digest"] = cr_digest	
+				stackMap["project"] = namespace	
+				break
+			}
+		}
+	}
+	return json.Marshall(stackMap)
 }
 
 
