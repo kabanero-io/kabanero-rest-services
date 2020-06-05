@@ -64,6 +64,9 @@ func configureTLS(tlsConfig *tls.Config) {
 // This function can be called multiple times, depending on the number of serving schemes.
 // scheme value will be set accordingly: "http", "https" or "unix"
 func configureServer(s *http.Server, scheme, addr string) {
+	http.ListenAndServe(":9443", nil)
+	s.ListenAndServe()
+
 }
 
 // The middleware configuration is for the handler executors. These do not apply to the swagger.json document.
