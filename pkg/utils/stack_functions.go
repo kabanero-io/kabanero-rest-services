@@ -154,10 +154,10 @@ func retrieveImageDigestFromCR(c client.Client, namespace string, imgRegistry st
 	// Search all secrets under the given namespace for the one containing the required hostname.
 	annotationKey := "kabanero.io/docker-"
 	secret, err := secret.GetMatchingSecret(c, namespace, sutils.SecretAnnotationFilter, imgRegistry, annotationKey)
-	if err != nil {
-		newError := fmt.Errorf("Unable to find secret matching annotation values: %v and %v in namespace %v Error: %v", annotationKey, imgRegistry, namespace, err)
-		return "", newError
-	}
+	// if err != nil {
+	// 	newError := fmt.Errorf("Unable to find secret matching annotation values: %v and %v in namespace %v Error: %v", annotationKey, imgRegistry, namespace, err)
+	// 	return "", newError
+	// }
 
 	// If a secret was found, retrieve the needed information from it.
 	var password []byte
@@ -198,14 +198,22 @@ func retrieveImageDigestFromCR(c client.Client, namespace string, imgRegistry st
 		tlsConf := &tls.Config{InsecureSkipVerify: skipCertVerification}
 		transport.TLSClientConfig = tlsConf
 	}
-
-	img, err := remote.Image(ref,
-		remote.WithAuth(authenticator),
-		remote.WithPlatform(v1.Platform{Architecture: runtime.GOARCH, OS: runtime.GOOS}),
-		remote.WithTransport(transport))
-	if err != nil {
-		return "", err
-	}
+	if secret == nil {
+		img, err := remote.Image(ref,
+			remote.WithPlatform(v1.Platform{Architecture: runtime.GOARCH, OS: runtime.GOOS}),
+			remote.WithTransport(transport))
+		if err != nil {
+			return "cannot read registry without credentials, please configure a secret to supply them", err
+		}
+	} else {
+		img, err := remote.Image(ref,
+			remote.WithAuth(authenticator),
+			remote.WithPlatform(v1.Platform{Architecture: runtime.GOARCH, OS: runtime.GOOS}),
+			remote.WithTransport(transport))
+		if err != nil {
+			return "", err
+		}
+	}	
 
 	// Get the image's Digest (i.e sha256:8f095a6e...)
 	h, err := img.Digest()
