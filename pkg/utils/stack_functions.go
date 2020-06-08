@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"encoding/json"
 
 	"github.com/go-logr/logr"
 	kabanerov1alpha2 "github.com/kabanero-io/kabanero-operator/pkg/apis/kabanero/v1alpha2"
@@ -18,29 +19,39 @@ import (
 )
 
 // -----------------------------------------------------------------------------------------------
-// Client that creates/deletes stacks.
+// Client struct
 // -----------------------------------------------------------------------------------------------
 type stackClient struct {
 	objs map[string]*kabanerov1alpha2.Stack
 }
 
-func listStacksInKabanero(k *kabanerov1alpha2.Kabanero) error {
+func getHookNamespace() (string, error) {
+	ns, found := os.LookupEnv("KABANERO_NAMESPACE")
+	if !found {
+		return "", fmt.Errorf("KABANERO_NAMESPACE must be set")
+	}
+	return ns, nil
+}
+
+// in rest endpoint biz logic marshal map list to json:  jsonMapList, _ := json.Marshal(stackMapList)
+func listStacksInKabanero(namespace string) ([]map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
 	deployedStacks := &kabanerov1alpha2.StackList{}
-	err := cl.List(ctx, deployedStacks, client.InNamespace(k.GetNamespace()))
+	err := cl.List(ctx, deployedStacks, client.InNamespace(getHookNamespace()))
 	if err != nil {
 		return err
 	}
 	
 	// Compare the list of currently deployed stacks and the stacks in the index.
-	var stackMapList []M
+	var stackMapList []map[string]interface{}
 	for _, deployedStack := range deployedStacks.Items {
+		//stackMap := make(map[string]interface{})
 		stackMap := make(map[string]interface{})
 		stackMap["name"] = deployedStack.Spec.name
-		var versionMapList []M
+		var versionMapList []map[string]interface{}
 		for _, dStackVersion := range deployedStack.Spec.Versions {
-			versionMap := make(map[string]string)
+			versionMap := make(map[string]interface{})
 			status := dStackVersion.Status.status
 			versionMap["status"] = status
 			versionMap["version"] = dStackVersion.Status.version
@@ -57,10 +68,43 @@ func listStacksInKabanero(k *kabanerov1alpha2.Kabanero) error {
 		stackMap["version"] = versionMapList
 		stackMapList = append(stackMapList, stackMap)
 	}
-	return json.Marshall(stackMapList)
+	return stackMapList
 }
 
-func digestCheck(stack_digest string, cr_digest string, status string) {
+// in rest endpoint biz logic marshal map to json:  jsonMap, _ := json.Marshal(stackMap)
+func describeStack(namespace string, name string, version string) (map[string]interface{}, error) {
+	ctx := context.Background()
+	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
+	deployedStacks := &kabanerov1alpha2.StackList{}
+	err := cl.List(ctx, deployedStacks, client.InNamespace(getHookNamespace()))
+	if err != nil {
+		return err
+	}
+	stackMap := make(map[string]interface{})
+	for _, deployedStack := range deployedStacks.Items {
+		stackName = deployedStack.Spec.name
+		if stackName == name {
+			for _, dStackVersion := range deployedStack.Spec.Versions {
+				if dStackVersion.Status.version = version {
+					stack_digest := dStackVersion.Images.digest.activation 
+					cr_digest := retrieveImageDigestFromContainerRegistry(cl, namespace, imgRegistry , true, logr logr.Logger, imageName)
+				} 
+				stackMap["name"] = name
+				stackMap["version"] = version
+				stackMap["image"] = dStackVersion.Images.image
+				stackMap["status"] = dStackVersion.Status.status
+				stackMap["digestCheck"] = digestCheck(stack_digest, cr_digest, status)
+				stackMap["stack digest"] = stack_digest
+				stackMap["cr image digest"] = cr_digest	
+				stackMap["project"] = namespace	
+				break
+			}
+		}
+	}
+	return stackMap
+}
+
+func digestCheck(stack_digest string, cr_digest string, status string) string {
 	digestCheck = "mismatched" 
 	if stack_digest != nil && cr_digest != nil {
 		if stack_digest == cr_digest  {
@@ -91,65 +135,8 @@ func digestCheck(stack_digest string, cr_digest string, status string) {
 	return digestCheck
 }
 
-// this code may change to just use unstructured eventually
-	// e.g.
-	//
-	// func getCRWInstance(ctx context.Context, k *kabanerov1alpha2.Kabanero, c client.Client) (*unstructured.Unstructured, error) {
-	// 	crwInst := &unstructured.Unstructured{}
-	// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
-	// 		Kind:    "CheCluster",
-	// 		Group:   "org.eclipse.che",
-	// 		Version: "v1",
-	// 	})
-	// 	err := c.Get(ctx, client.ObjectKey{
-	// 		Name:      crwOperatorCRNameSuffix,
-	// 		Namespace: k.ObjectMeta.Namespace}, crwInst)
-	// 	return crwInst, err
-	// }
-	// server, found, err := unstructured.NestedFieldCopy(crwInst.Object, "spec", "server")
-
-	// stackInst := &unstructured.Unstructured{}
-	// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
-	// 		Kind:    "CheCluster",
-	// 		Group:   "org.eclipse.che",
-	// 		Version: "v1",
-	// 	})
-func describeStack(k *kabanerov1alpha2.Kabanero, name string, version string) error {
-	ctx := context.Background()
-	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
-	deployedStacks := &kabanerov1alpha2.StackList{}
-	err := cl.List(ctx, deployedStacks, client.InNamespace(k.GetNamespace()))
-	if err != nil {
-		return err
-	}
-	stackMap := make(map[string]interface{})
-	for _, deployedStack := range deployedStacks.Items {
-		stackName = deployedStack.Spec.name
-		if stackName == name {
-			for _, dStackVersion := range deployedStack.Spec.Versions {
-				if dStackVersion.Status.version = version {
-					stack_digest := dStackVersion.Images.digest.activation 
-					cr_digest := retrieveImageDigestFromCR(cl, namespace, imgRegistry , true, logr logr.Logger, imageName)
-				} 
-				stackMap["name"] = name
-				stackMap["version"] = version
-				stackMap["image"] = dStackVersion.Images.image
-				stackMap["status"] = dStackVersion.Status.status
-				stackMap["digestCheck"] = digestCheck(stack_digest, cr_digest, status)
-			//msg.put("git repo url", repoUrl);  
-				stackMap["stack digest"] = stack_digest
-				stackMap["cr image digest"] = cr_digest	
-				stackMap["project"] = namespace	
-				break
-			}
-		}
-	}
-	return json.Marshall(stackMap)
-}
-
-
 // Retrieves the input image digest from the hosting repository.
-func retrieveImageDigestFromCR(c client.Client, namespace string, imgRegistry string, skipCertVerification bool, logr logr.Logger, image string) (string, error) {
+func retrieveImageDigestFromContainerRegistry(c client.Client, namespace string, imgRegistry string, skipCertVerification bool, logr logr.Logger, image string) (string, error) {
 	
 	// Search all secrets under the given namespace for the one containing the required hostname.
 	annotationKey := "kabanero.io/docker-"
@@ -224,3 +211,27 @@ func retrieveImageDigestFromCR(c client.Client, namespace string, imgRegistry st
 	// Return the actual digest part only.
 	return h.Hex, nil
 }
+
+// this code may change to just use unstructured eventually
+	// e.g.
+	//
+	// func getCRWInstance(ctx context.Context, k *kabanerov1alpha2.Kabanero, c client.Client) (*unstructured.Unstructured, error) {
+	// 	crwInst := &unstructured.Unstructured{}
+	// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
+	// 		Kind:    "CheCluster",
+	// 		Group:   "org.eclipse.che",
+	// 		Version: "v1",
+	// 	})
+	// 	err := c.Get(ctx, client.ObjectKey{
+	// 		Name:      crwOperatorCRNameSuffix,
+	// 		Namespace: k.ObjectMeta.Namespace}, crwInst)
+	// 	return crwInst, err
+	// }
+	// server, found, err := unstructured.NestedFieldCopy(crwInst.Object, "spec", "server")
+
+	// stackInst := &unstructured.Unstructured{}
+	// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
+	// 		Kind:    "CheCluster",
+	// 		Group:   "org.eclipse.che",
+	// 		Version: "v1",
+	// 	})
