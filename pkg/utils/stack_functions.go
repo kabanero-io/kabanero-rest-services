@@ -103,7 +103,7 @@ func describeStackFunc(name string, version string) (map[string]interface{}, err
 			}
 		}
 	}
-	return describeStack
+	return stack
 }
 
 func digestCheck(stack_digest string, cr_digest string, status string) string {
