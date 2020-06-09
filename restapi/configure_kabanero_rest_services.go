@@ -47,6 +47,16 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 		})
 	}
 
+	api.DescribeHandler = operations.DescribeHandlerFunc(func(params operations.DescribeParams) middleware.Responder {
+		describeStack = describeStackFunc(params.StackName, params.Version)
+		return operations.NewDescribeOK().WithPayload(&models.DescribeStack{describeStack})
+	})
+
+	api.ListHandler = operations.ListHandlerFunc(func(params operations.ListParams) middleware.Responder {
+		stacksList = listStacksFunc()
+		return operations.NewDescribeOK().WithPayload(&models.ListStacks{stacksList})
+	})
+
 	api.PreServerShutdown = func() {}
 
 	api.ServerShutdown = func() {}

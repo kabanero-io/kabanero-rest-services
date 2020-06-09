@@ -1,3 +1,4 @@
+// comment
 package utils
 
 import (
@@ -17,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var myLogger Logger = log.WithValues("Request.Namespace", "kabanero-rest-service", "Request.Name", "kabanero-rest-service")
+var myLogger logr.Logger = log.WithValues("Request.Namespace", "kabanero-rest-service", "Request.Name", "kabanero-rest-service")
 
 // -----------------------------------------------------------------------------------------------
 // Client struct
@@ -37,7 +38,7 @@ func getHookNamespace() (string, error) {
 // in rest endpoint biz logic marshal map list to json:  jsonMapList, _ := json.Marshal(stackMapList)
 // w.Header().Set("Content-Type", "application/json")
 // w.Write(jsonMapList)
-func listStacksInKabanero(namespace string) ([]map[string]interface{}, error) {
+func listStacksFunc() ([]map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
 	deployedStacks := &kabanerov1alpha2.StackList{}
@@ -47,37 +48,33 @@ func listStacksInKabanero(namespace string) ([]map[string]interface{}, error) {
 	}
 	
 	// Compare the list of currently deployed stacks and the stacks in the index.
-	var stackMapList []map[string]interface{}
+	var listOfStacks stacksList
 	for _, deployedStack := range deployedStacks.Items {
-		//stackMap := make(map[string]interface{})
-		stackMap := make(map[string]interface{})
-		stackMap["name"] = deployedStack.Spec.name
-		var versionMapList []map[string]interface{}
+		var stack kabaneroStack
+		stack.name = deployedStack.Spec.name
 		for _, dStackVersion := range deployedStack.Spec.Versions {
-			versionMap := make(map[string]interface{})
-			status := dStackVersion.Status.status
-			versionMap["status"] = status
-			versionMap["version"] = dStackVersion.Status.version
+			var item kabaneroStack.KabaneroStackStatusItems0
+			item.status = dStackVersion.Status.status
+			item.version = dStackVersion.Status.version
 			stack_digest := dStackVersion.Images.digest.activation
+			item.kabaneroDigest	= stack_digest
 			imageName :=  dStackVersion.Images.image
 			s := strings.Split(imageName, "/")
 			imgRegistry := s[0]
 			cr_digest := retrieveImageDigestFromCR(cl, namespace, imgRegistry , true, myLogger, imageName)
-			versionMap["stack digest"] = stack_digest
-			versionMap["cr digest"] = cr_digest
-			versionMap["digestCheck"] = digestCheck(stack_digest, cr_digest, status)
-			versionMapList = append(versionMapList, versionMap)	
+			item.imageDigest = cr_digest
+			item.digestCheck = digestCheck(stack_digest, cr_digest, status)
+			stack.KabaneroStackStatusItems0 = append(stack.KabaneroStackStatusItems0,item)
 		}
-		stackMap["version"] = versionMapList
-		stackMapList = append(stackMapList, stackMap)
+		listOfStacks = append(listOfStacks,stack)
 	}
-	return stackMapList
+	return listOfStacks
 }
 
 // in rest endpoint biz logic marshal map to json:  jsonMap, _ := json.Marshal(stackMap)
 // w.Header().Set("Content-Type", "application/json")
 // w.Write(jsonMap)
-func describeStack(namespace string, name string, version string) (map[string]interface{}, error) {
+func describeStackFunc(name string, version string) (map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
 	deployedStacks := &kabanerov1alpha2.StackList{}
@@ -85,7 +82,7 @@ func describeStack(namespace string, name string, version string) (map[string]in
 	if err != nil {
 		return err
 	}
-	stackMap := make(map[string]interface{})
+	var stack describeStack 
 	for _, deployedStack := range deployedStacks.Items {
 		stackName = deployedStack.Spec.name
 		if stackName == name {
@@ -94,19 +91,19 @@ func describeStack(namespace string, name string, version string) (map[string]in
 					stack_digest := dStackVersion.Images.digest.activation 
 					cr_digest := retrieveImageDigestFromContainerRegistry(cl, namespace, imgRegistry , true, myLogger, imageName)
 				} 
-				stackMap["name"] = name
-				stackMap["version"] = version
-				stackMap["image"] = dStackVersion.Images.image
-				stackMap["status"] = dStackVersion.Status.status
-				stackMap["digestCheck"] = digestCheck(stack_digest, cr_digest, status)
-				stackMap["stack digest"] = stack_digest
-				stackMap["cr image digest"] = cr_digest	
-				stackMap["project"] = namespace	
+				stack.name = name
+				stack.version = version
+				stack.image = dStackVersion.Images.image
+				stack.status = dStackVersion.Status.status
+				stack.digestCheck = digestCheck(stack_digest, cr_digest, status)
+				stack.kabaneroDigest = 	stack_digest
+				stack.imageDigest = cr_digest
+				stack.project = namespace
 				break
 			}
 		}
 	}
-	return stackMap
+	return describeStack
 }
 
 func digestCheck(stack_digest string, cr_digest string, status string) string {
