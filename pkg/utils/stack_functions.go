@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"encoding/json"
-
+	
 	"github.com/go-logr/logr"
 	kabanerov1alpha2 "github.com/kabanero-io/kabanero-operator/pkg/apis/kabanero/v1alpha2"
 	"github.com/kabanero-io/kabanero-operator/pkg/controller/kabaneroplatform/utils"
@@ -17,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var myLogger Logger = log.WithValues("Request.Namespace", "kabanero-rest-service", "Request.Name", "kabanero-rest-service")
 
 // -----------------------------------------------------------------------------------------------
 // Client struct
@@ -34,6 +35,8 @@ func getHookNamespace() (string, error) {
 }
 
 // in rest endpoint biz logic marshal map list to json:  jsonMapList, _ := json.Marshal(stackMapList)
+// w.Header().Set("Content-Type", "application/json")
+// w.Write(jsonMapList)
 func listStacksInKabanero(namespace string) ([]map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
@@ -59,7 +62,7 @@ func listStacksInKabanero(namespace string) ([]map[string]interface{}, error) {
 			imageName :=  dStackVersion.Images.image
 			s := strings.Split(imageName, "/")
 			imgRegistry := s[0]
-			cr_digest := retrieveImageDigestFromCR(cl, namespace, imgRegistry , true, logr logr.Logger, imageName)
+			cr_digest := retrieveImageDigestFromCR(cl, namespace, imgRegistry , true, myLogger, imageName)
 			versionMap["stack digest"] = stack_digest
 			versionMap["cr digest"] = cr_digest
 			versionMap["digestCheck"] = digestCheck(stack_digest, cr_digest, status)
@@ -72,6 +75,8 @@ func listStacksInKabanero(namespace string) ([]map[string]interface{}, error) {
 }
 
 // in rest endpoint biz logic marshal map to json:  jsonMap, _ := json.Marshal(stackMap)
+// w.Header().Set("Content-Type", "application/json")
+// w.Write(jsonMap)
 func describeStack(namespace string, name string, version string) (map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
@@ -87,7 +92,7 @@ func describeStack(namespace string, name string, version string) (map[string]in
 			for _, dStackVersion := range deployedStack.Spec.Versions {
 				if dStackVersion.Status.version = version {
 					stack_digest := dStackVersion.Images.digest.activation 
-					cr_digest := retrieveImageDigestFromContainerRegistry(cl, namespace, imgRegistry , true, logr logr.Logger, imageName)
+					cr_digest := retrieveImageDigestFromContainerRegistry(cl, namespace, imgRegistry , true, myLogger, imageName)
 				} 
 				stackMap["name"] = name
 				stackMap["version"] = version
