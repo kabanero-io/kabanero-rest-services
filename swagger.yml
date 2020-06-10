@@ -14,54 +14,6 @@ definitions:
       message:
         type: string
         minLength: 1
-  
-  # login defs
-  credentials:
-    type: object
-    required: 
-      - gituser
-      - gitpat
-    properties:
-      gituser:
-        type: string
-        minLength: 1
-      gitpat:
-        type: string
-        minLength: 1
-  jwt:
-    type: object
-    properties:
-      jwt:
-        type: string
-        minLength: 1
-  # END login defs 
-        
-  # stack related defs
-  commonStack:
-    type:  object
-    properties:
-      name: 
-        type: string
-      versions:
-        type: array
-        items:
-          type: object
-          properties:
-            reponame:
-              type: string
-            version:
-              type: string
-            images:
-              type: array
-              items:
-                type: object
-                properties:
-                  image:
-                    type: string
-      status:
-        type: string
-      exception message:
-        type: string 
     
   kabaneroStack:
     type: object
@@ -87,35 +39,11 @@ definitions:
   stacksList:
     type: object
     properties:
-      new curated stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      activate stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
       kabanero stacks:
         type: array
         items:
           $ref: '#/definitions/kabaneroStack'
-      obsolete stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      curated stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      repositories:
-        type: array
-        items:
-          type: object
-          properties:
-            name:
-              type: string
-            url:
-              type: string
+      
     
   describeStack:
     type: object
@@ -125,8 +53,6 @@ definitions:
       version:
         type: string
       project:
-        type: string
-      git repo url:
         type: string
       image:
         type: string
@@ -173,22 +99,7 @@ paths:
           schema:
             $ref: "#/definitions/message"
               
-  /login:
-    post:
-      parameters:
-        - name: body
-          in: body
-          schema:
-            $ref: '#/definitions/credentials'
-      responses:
-        201:
-          description: login successful
-          schema:
-            $ref: '#/definitions/jwt'
-        default:
-          description: error
-          schema:
-            $ref: "#/definitions/error"
+
   /v1/stacks:
     get:
       operationId: list
@@ -219,10 +130,7 @@ paths:
           description: describe stack
           schema:
             $ref: '#/definitions/describeStack'
-          
-      
-  
-  
+            
 produces:
 - application/io.goswagger.examples.todo-list.v1+json
 schemes:

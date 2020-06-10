@@ -19,7 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/kabanero-io/kabanero-rest-services/restapi/operations/message"
+	"github.com/davco01a/kabanero-rest-services/restapi/operations/message"
 )
 
 // NewKabaneroRestServicesAPI creates a new KabaneroRestServices instance
@@ -48,9 +48,6 @@ func NewKabaneroRestServicesAPI(spec *loads.Document) *KabaneroRestServicesAPI {
 		}),
 		MessageGetTestHandler: message.GetTestHandlerFunc(func(params message.GetTestParams) middleware.Responder {
 			return middleware.NotImplemented("operation message.GetTest has not yet been implemented")
-		}),
-		PostLoginHandler: PostLoginHandlerFunc(func(params PostLoginParams) middleware.Responder {
-			return middleware.NotImplemented("operation PostLogin has not yet been implemented")
 		}),
 		DescribeHandler: DescribeHandlerFunc(func(params DescribeParams) middleware.Responder {
 			return middleware.NotImplemented("operation Describe has not yet been implemented")
@@ -95,8 +92,6 @@ type KabaneroRestServicesAPI struct {
 	MessageGetHandler message.GetHandler
 	// MessageGetTestHandler sets the operation handler for the get test operation
 	MessageGetTestHandler message.GetTestHandler
-	// PostLoginHandler sets the operation handler for the post login operation
-	PostLoginHandler PostLoginHandler
 	// DescribeHandler sets the operation handler for the describe operation
 	DescribeHandler DescribeHandler
 	// ListHandler sets the operation handler for the list operation
@@ -172,9 +167,6 @@ func (o *KabaneroRestServicesAPI) Validate() error {
 	}
 	if o.MessageGetTestHandler == nil {
 		unregistered = append(unregistered, "message.GetTestHandler")
-	}
-	if o.PostLoginHandler == nil {
-		unregistered = append(unregistered, "PostLoginHandler")
 	}
 	if o.DescribeHandler == nil {
 		unregistered = append(unregistered, "DescribeHandler")
@@ -278,10 +270,6 @@ func (o *KabaneroRestServicesAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/test"] = message.NewGetTest(o.context, o.MessageGetTestHandler)
-	if o.handlers["POST"] == nil {
-		o.handlers["POST"] = make(map[string]http.Handler)
-	}
-	o.handlers["POST"]["/login"] = NewPostLogin(o.context, o.PostLoginHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

@@ -49,33 +49,6 @@ func init() {
         }
       }
     },
-    "/login": {
-      "post": {
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/credentials"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "login successful",
-            "schema": {
-              "$ref": "#/definitions/jwt"
-            }
-          },
-          "default": {
-            "description": "error",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      }
-    },
     "/test": {
       "get": {
         "tags": [
@@ -139,69 +112,10 @@ func init() {
     }
   },
   "definitions": {
-    "commonStack": {
-      "type": "object",
-      "properties": {
-        "exception message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "versions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "images": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "image": {
-                      "type": "string"
-                    }
-                  }
-                }
-              },
-              "reponame": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "credentials": {
-      "type": "object",
-      "required": [
-        "gituser",
-        "gitpat"
-      ],
-      "properties": {
-        "gitpat": {
-          "type": "string",
-          "minLength": 1
-        },
-        "gituser": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
     "describeStack": {
       "type": "object",
       "properties": {
         "digest check": {
-          "type": "string"
-        },
-        "git repo url": {
           "type": "string"
         },
         "image": {
@@ -239,15 +153,6 @@ func init() {
         },
         "message": {
           "type": "string"
-        }
-      }
-    },
-    "jwt": {
-      "type": "object",
-      "properties": {
-        "jwt": {
-          "type": "string",
-          "minLength": 1
         }
       }
     },
@@ -297,48 +202,10 @@ func init() {
     "stacksList": {
       "type": "object",
       "properties": {
-        "activate stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
         "kabanero stacks": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/kabaneroStack"
-          }
-        },
-        "new curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "obsolete stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "url": {
-                "type": "string"
-              }
-            }
           }
         }
       }
@@ -372,33 +239,6 @@ func init() {
             "description": "standard message response",
             "schema": {
               "$ref": "#/definitions/message"
-            }
-          }
-        }
-      }
-    },
-    "/login": {
-      "post": {
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/credentials"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "login successful",
-            "schema": {
-              "$ref": "#/definitions/jwt"
-            }
-          },
-          "default": {
-            "description": "error",
-            "schema": {
-              "$ref": "#/definitions/error"
             }
           }
         }
@@ -467,31 +307,6 @@ func init() {
     }
   },
   "definitions": {
-    "CommonStackVersionsItems0": {
-      "type": "object",
-      "properties": {
-        "images": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CommonStackVersionsItems0ImagesItems0"
-          }
-        },
-        "reponame": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        }
-      }
-    },
-    "CommonStackVersionsItems0ImagesItems0": {
-      "type": "object",
-      "properties": {
-        "image": {
-          "type": "string"
-        }
-      }
-    },
     "KabaneroStackStatusItems0": {
       "type": "object",
       "properties": {
@@ -512,61 +327,10 @@ func init() {
         }
       }
     },
-    "StacksListRepositoriesItems0": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "commonStack": {
-      "type": "object",
-      "properties": {
-        "exception message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "versions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CommonStackVersionsItems0"
-          }
-        }
-      }
-    },
-    "credentials": {
-      "type": "object",
-      "required": [
-        "gituser",
-        "gitpat"
-      ],
-      "properties": {
-        "gitpat": {
-          "type": "string",
-          "minLength": 1
-        },
-        "gituser": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
     "describeStack": {
       "type": "object",
       "properties": {
         "digest check": {
-          "type": "string"
-        },
-        "git repo url": {
           "type": "string"
         },
         "image": {
@@ -607,15 +371,6 @@ func init() {
         }
       }
     },
-    "jwt": {
-      "type": "object",
-      "properties": {
-        "jwt": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
     "kabaneroStack": {
       "type": "object",
       "properties": {
@@ -645,40 +400,10 @@ func init() {
     "stacksList": {
       "type": "object",
       "properties": {
-        "activate stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
         "kabanero stacks": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/kabaneroStack"
-          }
-        },
-        "new curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "obsolete stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/StacksListRepositoriesItems0"
           }
         }
       }

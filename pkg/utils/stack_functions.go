@@ -35,16 +35,13 @@ func getHookNamespace() (string, error) {
 	return ns, nil
 }
 
-// in rest endpoint biz logic marshal map list to json:  jsonMapList, _ := json.Marshal(stackMapList)
-// w.Header().Set("Content-Type", "application/json")
-// w.Write(jsonMapList)
 func listStacksFunc() ([]map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}
 	deployedStacks := &kabanerov1alpha2.StackList{}
 	err := cl.List(ctx, deployedStacks, client.InNamespace(getHookNamespace()))
 	if err != nil {
-		return err
+		return err 
 	}
 	
 	// Compare the list of currently deployed stacks and the stacks in the index.
@@ -71,9 +68,6 @@ func listStacksFunc() ([]map[string]interface{}, error) {
 	return listOfStacks
 }
 
-// in rest endpoint biz logic marshal map to json:  jsonMap, _ := json.Marshal(stackMap)
-// w.Header().Set("Content-Type", "application/json")
-// w.Write(jsonMap)
 func describeStackFunc(name string, version string) (map[string]interface{}, error) {
 	ctx := context.Background()
 	cl := stackClient{map[client.ObjectKey][]metav1.OwnerReference{}}

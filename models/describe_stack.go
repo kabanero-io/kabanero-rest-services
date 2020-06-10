@@ -18,9 +18,6 @@ type DescribeStack struct {
 	// digest check
 	DigestCheck string `json:"digest check,omitempty"`
 
-	// git repo url
-	GitRepoURL string `json:"git repo url,omitempty"`
-
 	// image
 	Image string `json:"image,omitempty"`
 
