@@ -95,7 +95,7 @@ func init() {
       "get": {
         "operationId": "list",
         "responses": {
-          "201": {
+          "200": {
             "description": "login successful",
             "schema": {
               "$ref": "#/definitions/stacksList"
@@ -290,7 +290,7 @@ func init() {
       "get": {
         "operationId": "list",
         "responses": {
-          "201": {
+          "200": {
             "description": "login successful",
             "schema": {
               "$ref": "#/definitions/stacksList"

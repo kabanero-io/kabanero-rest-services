@@ -13,14 +13,14 @@ import (
 	"github.com/davco01a/kabanero-rest-services/models"
 )
 
-// ListCreatedCode is the HTTP code returned for type ListCreated
-const ListCreatedCode int = 201
+// ListOKCode is the HTTP code returned for type ListOK
+const ListOKCode int = 200
 
-/*ListCreated login successful
+/*ListOK login successful
 
-swagger:response listCreated
+swagger:response listOK
 */
-type ListCreated struct {
+type ListOK struct {
 
 	/*
 	  In: Body
@@ -28,27 +28,27 @@ type ListCreated struct {
 	Payload *models.StacksList `json:"body,omitempty"`
 }
 
-// NewListCreated creates ListCreated with default headers values
-func NewListCreated() *ListCreated {
+// NewListOK creates ListOK with default headers values
+func NewListOK() *ListOK {
 
-	return &ListCreated{}
+	return &ListOK{}
 }
 
-// WithPayload adds the payload to the list created response
-func (o *ListCreated) WithPayload(payload *models.StacksList) *ListCreated {
+// WithPayload adds the payload to the list o k response
+func (o *ListOK) WithPayload(payload *models.StacksList) *ListOK {
 	o.Payload = payload
 	return o
 }
 
-// SetPayload sets the payload to the list created response
-func (o *ListCreated) SetPayload(payload *models.StacksList) {
+// SetPayload sets the payload to the list o k response
+func (o *ListOK) SetPayload(payload *models.StacksList) {
 	o.Payload = payload
 }
 
 // WriteResponse to the client
-func (o *ListCreated) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+func (o *ListOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
-	rw.WriteHeader(201)
+	rw.WriteHeader(200)
 	if o.Payload != nil {
 		payload := o.Payload
 		if err := producer.Produce(rw, payload); err != nil {
