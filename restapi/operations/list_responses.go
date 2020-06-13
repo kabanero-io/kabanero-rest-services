@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/davco01a/kabanero-rest-services/models"
+	"github.com/kabanero-io/kabanero-rest-services/models"
 )
 
 // ListOKCode is the HTTP code returned for type ListOK
@@ -25,7 +25,7 @@ type ListOK struct {
 	/*
 	  In: Body
 	*/
-	Payload *models.StacksList `json:"body,omitempty"`
+	Payload []*models.KabaneroStack `json:"body,omitempty"`
 }
 
 // NewListOK creates ListOK with default headers values
@@ -35,13 +35,13 @@ func NewListOK() *ListOK {
 }
 
 // WithPayload adds the payload to the list o k response
-func (o *ListOK) WithPayload(payload *models.StacksList) *ListOK {
+func (o *ListOK) WithPayload(payload []*models.KabaneroStack) *ListOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the list o k response
-func (o *ListOK) SetPayload(payload *models.StacksList) {
+func (o *ListOK) SetPayload(payload []*models.KabaneroStack) {
 	o.Payload = payload
 }
 
@@ -49,11 +49,14 @@ func (o *ListOK) SetPayload(payload *models.StacksList) {
 func (o *ListOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(200)
-	if o.Payload != nil {
-		payload := o.Payload
-		if err := producer.Produce(rw, payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
+	payload := o.Payload
+	if payload == nil {
+		// return empty array
+		payload = make([]*models.KabaneroStack, 0, 50)
+	}
+
+	if err := producer.Produce(rw, payload); err != nil {
+		panic(err) // let the recovery middleware deal with this
 	}
 }
 

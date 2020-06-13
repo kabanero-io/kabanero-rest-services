@@ -25,7 +25,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"golang.org/x/net/netutil"
 
-	"github.com/davco01a/kabanero-rest-services/restapi/operations"
+	"github.com/kabanero-io/kabanero-rest-services/restapi/operations"
 )
 
 const (

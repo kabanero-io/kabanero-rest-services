@@ -19,7 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/davco01a/kabanero-rest-services/restapi/operations/message"
+	"github.com/kabanero-io/kabanero-rest-services/restapi/operations/message"
 )
 
 // NewKabaneroRestServicesAPI creates a new KabaneroRestServices instance

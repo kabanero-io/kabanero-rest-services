@@ -15,7 +15,7 @@ definitions:
         type: string
         minLength: 1
     
-  kabaneroStack:
+  KabaneroStack:
     type: object
     properties:
       name:
@@ -36,16 +36,7 @@ definitions:
             kabanero digest:
               type: string
     
-  stacksList:
-    type: object
-    properties:
-      kabanero stacks:
-        type: array
-        items:
-          $ref: '#/definitions/kabaneroStack'
-      
-    
-  describeStack:
+  DescribeStack:
     type: object
     properties:
       name: 
@@ -107,7 +98,9 @@ paths:
         200:
           description: login successful
           schema:
-            $ref: '#/definitions/stacksList'
+            type: array
+            items:
+              $ref: '#/definitions/KabaneroStack'
         default:
           description: error
           schema:
@@ -129,7 +122,7 @@ paths:
         200:
           description: describe stack
           schema:
-            $ref: '#/definitions/describeStack'
+            $ref: '#/definitions/DescribeStack'
             
 produces:
 - application/io.goswagger.examples.todo-list.v1+json

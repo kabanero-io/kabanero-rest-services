@@ -85,7 +85,7 @@ func init() {
           "200": {
             "description": "describe stack",
             "schema": {
-              "$ref": "#/definitions/describeStack"
+              "$ref": "#/definitions/DescribeStack"
             }
           }
         }
@@ -98,7 +98,10 @@ func init() {
           "200": {
             "description": "login successful",
             "schema": {
-              "$ref": "#/definitions/stacksList"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/KabaneroStack"
+              }
             }
           },
           "default": {
@@ -112,7 +115,7 @@ func init() {
     }
   },
   "definitions": {
-    "describeStack": {
+    "DescribeStack": {
       "type": "object",
       "properties": {
         "digest check": {
@@ -141,22 +144,7 @@ func init() {
         }
       }
     },
-    "error": {
-      "type": "object",
-      "required": [
-        "message"
-      ],
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "kabaneroStack": {
+    "KabaneroStack": {
       "type": "object",
       "properties": {
         "name": {
@@ -187,6 +175,21 @@ func init() {
         }
       }
     },
+    "error": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "message": {
       "type": "object",
       "required": [
@@ -196,17 +199,6 @@ func init() {
         "message": {
           "type": "string",
           "minLength": 1
-        }
-      }
-    },
-    "stacksList": {
-      "type": "object",
-      "properties": {
-        "kabanero stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/kabaneroStack"
-          }
         }
       }
     }
@@ -280,7 +272,7 @@ func init() {
           "200": {
             "description": "describe stack",
             "schema": {
-              "$ref": "#/definitions/describeStack"
+              "$ref": "#/definitions/DescribeStack"
             }
           }
         }
@@ -293,7 +285,10 @@ func init() {
           "200": {
             "description": "login successful",
             "schema": {
-              "$ref": "#/definitions/stacksList"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/KabaneroStack"
+              }
             }
           },
           "default": {
@@ -307,27 +302,7 @@ func init() {
     }
   },
   "definitions": {
-    "KabaneroStackStatusItems0": {
-      "type": "object",
-      "properties": {
-        "digest check": {
-          "type": "string"
-        },
-        "image digest": {
-          "type": "string"
-        },
-        "kabanero digest": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        }
-      }
-    },
-    "describeStack": {
+    "DescribeStack": {
       "type": "object",
       "properties": {
         "digest check": {
@@ -356,6 +331,40 @@ func init() {
         }
       }
     },
+    "KabaneroStack": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KabaneroStackStatusItems0"
+          }
+        }
+      }
+    },
+    "KabaneroStackStatusItems0": {
+      "type": "object",
+      "properties": {
+        "digest check": {
+          "type": "string"
+        },
+        "image digest": {
+          "type": "string"
+        },
+        "kabanero digest": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
     "error": {
       "type": "object",
       "required": [
@@ -371,20 +380,6 @@ func init() {
         }
       }
     },
-    "kabaneroStack": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/KabaneroStackStatusItems0"
-          }
-        }
-      }
-    },
     "message": {
       "type": "object",
       "required": [
@@ -394,17 +389,6 @@ func init() {
         "message": {
           "type": "string",
           "minLength": 1
-        }
-      }
-    },
-    "stacksList": {
-      "type": "object",
-      "properties": {
-        "kabanero stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/kabaneroStack"
-          }
         }
       }
     }

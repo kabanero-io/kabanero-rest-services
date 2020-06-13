@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/davco01a/kabanero-rest-services/models"
+	"github.com/kabanero-io/kabanero-rest-services/models"
 )
 
 // GetTestOKCode is the HTTP code returned for type GetTestOK

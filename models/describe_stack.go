@@ -12,7 +12,7 @@ import (
 
 // DescribeStack describe stack
 //
-// swagger:model describeStack
+// swagger:model DescribeStack
 type DescribeStack struct {
 
 	// digest check

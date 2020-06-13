@@ -15,7 +15,7 @@ import (
 
 // KabaneroStack kabanero stack
 //
-// swagger:model kabaneroStack
+// swagger:model KabaneroStack
 type KabaneroStack struct {
 
 	// name

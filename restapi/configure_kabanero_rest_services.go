@@ -4,6 +4,7 @@ package restapi
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/swag"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/kabanero-io/kabanero-rest-services/models"
+	"github.com/kabanero-io/kabanero-rest-services/pkg/utils"
 	"github.com/kabanero-io/kabanero-rest-services/restapi/operations"
 	"github.com/kabanero-io/kabanero-rest-services/restapi/operations/message"
 )
@@ -48,13 +50,21 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 	}
 
 	api.DescribeHandler = operations.DescribeHandlerFunc(func(params operations.DescribeParams) middleware.Responder {
-		utils.describeStackFunc(params.StackName, params.Version)
-		stack := utils.describeStackFunc(params.StackName, params.Version)
-		return operations.NewDescribeOK().WithPayload(stack)
+		fmt.Println("Entered DescribeHandler!")
+		describeStack, err := utils.DescribeStackFunc(params.StackName, params.Version)
+		if err != nil {
+			return operations.NewDescribeOK().WithPayload(&describeStack)
+		}
+		return operations.NewDescribeOK().WithPayload(&describeStack)
 	})
 
 	api.ListHandler = operations.ListHandlerFunc(func(params operations.ListParams) middleware.Responder {
-		return operations.NewListOK().WithPayload(utils.listStacksFunc())
+		fmt.Println("Entered ListHandler!")
+		listOfStacks, err := utils.ListStacksFunc()
+		if err != nil {
+			return operations.NewListOK().WithPayload(listOfStacks)
+		}
+		return operations.NewListOK().WithPayload(listOfStacks)
 	})
 
 	api.PreServerShutdown = func() {}
