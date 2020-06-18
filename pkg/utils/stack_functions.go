@@ -11,8 +11,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/docker/cli/cli/config"
-	"github.com/docker/cli/cli/config/configfile"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+
 	"github.com/docker/docker/registry"
 	"github.com/go-logr/logr"
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -20,14 +20,18 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	kabanerov1alpha2 "github.com/kabanero-io/kabanero-operator/pkg/apis/kabanero/v1alpha2"
-	sutils "github.com/kabanero-io/kabanero-operator/pkg/controller/stack/utils"
-	"github.com/kabanero-io/kabanero-operator/pkg/controller/utils/secret"
 	"github.com/kabanero-io/kabanero-rest-services/models"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtimer "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	//corev1 "k8s.io/api/core/v1"
+	//"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -130,12 +134,9 @@ func (c stackClient) Patch(ctx context.Context, obj runtimer.Object, patch clien
 	return errors.New("Patch is not supported")
 }
 
-func getHookNamespace() (string, error) {
-	ns, found := os.LookupEnv("KABANERO_NAMESPACE")
-	if !found {
-		return "", fmt.Errorf("KABANERO_NAMESPACE must be set")
-	}
-	return ns, nil
+func getHookNamespace() string {
+	ns := os.Getenv("KABANERO_CLI_NAMESPACE")
+	return ns
 }
 
 // Returns an authenticator object containing basic authentication credentials.
@@ -164,87 +165,119 @@ func resolveDockerConfRegKey(imgRegistry string) string {
 	return key
 }
 
-// Returns an authenticator object containing docker config credentials.
-// It handles both legacy .dockercfg file data and docker.json file data.
-func getDockerCfgSecAuth(dockerconfigjson []byte, dockerconfig []byte, imgRegistry string, reqLogger logr.Logger) (authn.Authenticator, error) {
-	// Read the docker config data into a configFile object.
-	var dcf *configfile.ConfigFile
-	if len(dockerconfigjson) != 0 {
-		cf, err := config.LoadFromReader(strings.NewReader(string(dockerconfigjson)))
-		if err != nil {
-			return nil, fmt.Errorf(fmt.Sprintf("Unable to load/map docker config data. Error: %v", err))
-		}
-		dcf = cf
-	} else {
-		cf, err := config.LegacyLoadFromReader(strings.NewReader(string(dockerconfig)))
-		if err != nil {
-			return nil, fmt.Errorf(fmt.Sprintf("Unable to load/map legacy docker config data. Error: %v", err))
-		}
-		dcf = cf
-	}
+func getClientClient() client.Client {
+	// // Get a config to talk to the apiserver
+	// cfg, err := config.GetConfig()
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// // Create a new Cmd to provide shared dependencies and start components
+	// mgr, err := manager.New(cfg, manager.Options{
+	// 	Namespace: getHookNamespace(),
+	// })
 
-	// Resolve the key that will be used to search for the server name entry in the docker config data.
-	key := resolveDockerConfRegKey(imgRegistry)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 
-	// If the docker config entry in the secret does not have an authentication entry, default
-	// to Anonymous authentication.
-	if !dcf.ContainsAuth() {
-		reqLogger.Info(fmt.Sprintf("Security credentials for server name: %v could not be found. The docker config data did not contain any authentication information.", key))
-		return authn.Anonymous, nil
-	}
+	// if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+	// 	panic(err.Error())
+	// }
+	// fmt.Println("<< starting manager")
+	// // Start the Cmd
+	// if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	// 	panic(err.Error())
+	// }
+	// fmt.Println("<< manager started")
+	// return mgr.GetClient()
 
-	// Get the security credentials for the given key (servername).
-	// The credentials are obtained from the credential store if one setup/configured; otherwise, they are obtained
-	// from the docker config data that was read.
-	// Note that it is very important that if the image being read contains the registry name as prefix,
-	// the registry name must match the server name used when the docker login was issued. For example, if
-	// private server: mysevername:5000 is used when issuing a docker login command, it is expected
-	// that the part of the image representing the registry should be mysevername:5000 (i.e.
-	// mysevername:5000/path/my-image:1.0.0)
-	cfg, err := dcf.GetAuthConfig(key)
+	cl, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve credentials from credentials for server name: Key: %v, Error: %v", key, err)
+		panic(err.Error())
 	}
-
-	// No match was found for the server name key. Default to anonymous authentication.
-	if len(cfg.Username) == 0 {
-		reqLogger.Info(fmt.Sprintf("Security credentials for server name: %v could not be found. The credential store or docker config data did not contain the security credentials for the mentioned server.", key))
-		return authn.Anonymous, nil
-	}
-
-	// Security credentials were found.
-	authenticator := authn.FromConfig(authn.AuthConfig{
-		Username:      cfg.Username,
-		Password:      cfg.Password,
-		Auth:          cfg.Auth,
-		IdentityToken: cfg.IdentityToken,
-		RegistryToken: cfg.RegistryToken,
-	})
-
-	return authenticator, nil
+	return cl
 }
 
 // list all stacks in namespace
 func ListStacksFunc() ([]*models.KabaneroStack, error) {
+	fmt.Println("Entered ListStacksFunc!")
+
+	ns := getHookNamespace()
+	fmt.Println("namespace:")
+	fmt.Println(ns)
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	// creates the clientset
+	clSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	deploymentsClient := clSet.AppsV1().Deployments(ns)
+	list, err := deploymentsClient.List(metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	for _, d := range list.Items {
+		fmt.Printf(" * %s \n", d.Name)
+		fmt.Println("labels")
+		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
+		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
+	}
+
+	fmt.Println("<<1.0>>")
+	stacksUnstructured := &unstructured.UnstructuredList{}
+	stacksUnstructured.SetKind("Stack")
+	stacksUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "Stack",
+		Group:   kabanerov1alpha2.SchemeGroupVersion.Group,
+		Version: kabanerov1alpha2.SchemeGroupVersion.Version,
+	})
+
 	ctx := context.Background()
-	cl := stackClient{make(map[string]*kabanerov1alpha2.Stack)}
+	cl := getClientClient()
+
+	err = cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
+
+	for _, onestack := range stacksUnstructured.Items {
+		fmt.Println("Stack:")
+		// stack := &kabanerov1alpha2.Stack{}
+		// mapstructure.Decode(onestack, &stack)
+		// fmt.Println(stack)
+		oneStackBytes, err := onestack.MarshalJSON()
+		if err != nil {
+			panic(err.Error())
+		}
+		oneStackStr := string(oneStackBytes)
+		fmt.Println(oneStackStr)
+		fmt.Println("  ")
+	}
+
+	//cl := stackClient{make(map[string]*kabanerov1alpha2.Stack)}
 	deployedStacks := &kabanerov1alpha2.StackList{}
 	listOfStacks := []*models.KabaneroStack{}
-	var ns string
-	var err error
-	ns, err = getHookNamespace()
-	err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
+
+	fmt.Println("<<1>>")
+
+	//err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
 	if err != nil {
+		fmt.Println("error from listing deployedStacks:")
+		fmt.Println(err)
 		return listOfStacks, err
 	}
 
 	// Compare the list of currently deployed stacks and the stacks in the index.
-
+	fmt.Println("<<2>>")
 	for _, deployedStack := range deployedStacks.Items {
 		stack := models.KabaneroStack{}
 		stack.Name = deployedStack.GetName()
 		items := []models.KabaneroStackStatusItems0{}
+		fmt.Println("<<2.1>>")
 		for _, dStackStatusVersion := range deployedStack.Status.Versions {
+			fmt.Println("<<2.11>>")
 			item := models.KabaneroStackStatusItems0{}
 			item.Status = dStackStatusVersion.Status
 			item.Version = dStackStatusVersion.Version
@@ -258,14 +291,14 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 			s := strings.Split(imageName, "/")
 			imgRegistry := s[0]
 			var crDigest string
-			crDigest, err = RetrieveImageDigestFromContainerRegistry(cl, ns, imgRegistry, true, myLogger, imageName)
+			crDigest, err = RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
 			item.ImageDigest = crDigest
 			item.DigestCheck = DigestCheck(stackDigest, crDigest, item.Status)
 			items = append(items, item)
 		}
 		listOfStacks = append(listOfStacks, &stack)
 	}
-
+	fmt.Println("<<3>>")
 	return listOfStacks, err
 }
 
@@ -277,7 +310,7 @@ func DescribeStackFunc(name string, version string) (models.DescribeStack, error
 	var stack models.DescribeStack
 	var ns string
 	var err error
-	ns, err = getHookNamespace()
+	ns = getHookNamespace()
 	err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
 	if err != nil {
 		return stack, err
@@ -295,7 +328,7 @@ func DescribeStackFunc(name string, version string) (models.DescribeStack, error
 					}
 					s := strings.Split(stack.Image, "/")
 					imgRegistry := s[0]
-					crDigest, err := RetrieveImageDigestFromContainerRegistry(cl, ns, imgRegistry, true, myLogger, stack.Image)
+					crDigest, err := RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, stack.Image)
 					if err != nil {
 						return stack, err
 					}
@@ -348,28 +381,38 @@ func DigestCheck(stackDigest string, crDigest string, status string) string {
 }
 
 // Retrieves the input image digest from the hosting repository.
-func RetrieveImageDigestFromContainerRegistry(c client.Client, namespace string, imgRegistry string, skipCertVerification bool, logr logr.Logger, image string) (string, error) {
+func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry string, skipCertVerification bool, logr logr.Logger, image string) (string, error) {
 
-	// Search all secrets under the given namespace for the one containing the required hostname.
-	annotationKey := "kabanero.io/docker-"
-	secret, err := secret.GetMatchingSecret(c, namespace, sutils.SecretAnnotationFilter, imgRegistry, annotationKey)
-	// if err != nil {
-	// 	newError := fmt.Errorf("Unable to find secret matching annotation values: %v and %v in namespace %v Error: %v", annotationKey, imgRegistry, namespace, err)
-	// 	return "", newError
-	// }
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	// creates the clientset
+	c, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
 
-	// If a secret was found, retrieve the needed information from it.
-	var password []byte
+	annotationKey := "tekton.dev/docker-0"
+	// annotationKey := "kabanero.io/docker-"
+	secretsList, err := c.CoreV1().Secrets(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	var hostName string
 	var username []byte
-	var dockerconfig []byte
-	var dockerconfigjson []byte
-
-	if secret != nil {
-		logr.Info(fmt.Sprintf("Secret used for image registry access: %v. Secret annotations: %v", secret.GetName(), secret.Annotations))
-		username, _ = secret.Data[corev1.BasicAuthUsernameKey]
-		password, _ = secret.Data[corev1.BasicAuthPasswordKey]
-		dockerconfig, _ = secret.Data[corev1.DockerConfigKey]
-		dockerconfigjson, _ = secret.Data[corev1.DockerConfigJsonKey]
+	var password []byte
+	//var seccret corev1.Secret
+	for _, secret := range secretsList.Items {
+		hostName = secret.ObjectMeta.Annotations[annotationKey]
+		fmt.Printf(" * hostname: %s \n", imgRegistry)
+		if strings.Contains(hostName, "docker.io") {
+			username = secret.Data["username"]
+			password = secret.Data["password"]
+			//seccret = secret
+			//fmt.Printf(" * user: %s password: %s\n", username, password)
+			break
+		}
 	}
 
 	// Create the authenticator mechanism to use for authentication.
@@ -379,13 +422,7 @@ func RetrieveImageDigestFromContainerRegistry(c client.Client, namespace string,
 		if err != nil {
 			return "", err
 		}
-	} else if len(dockerconfig) != 0 || len(dockerconfigjson) != 0 {
-		authenticator, err = getDockerCfgSecAuth(dockerconfigjson, dockerconfig, imgRegistry, logr)
-		if err != nil {
-			return "", err
-		}
 	}
-
 	// Retrieve the image manifest.
 	ref, err := name.ParseReference(image, name.WeakValidation)
 	if err != nil {
@@ -398,12 +435,12 @@ func RetrieveImageDigestFromContainerRegistry(c client.Client, namespace string,
 		transport.TLSClientConfig = tlsConf
 	}
 	var digest string
-	if secret == nil {
+	if len(username) == 0 {
 		img, err := remote.Image(ref,
 			remote.WithPlatform(v1.Platform{Architecture: runtime.GOARCH, OS: runtime.GOOS}),
 			remote.WithTransport(transport))
 		if err != nil {
-			return "cannot read registry without credentials, please configure a secret to supply them", err
+			return "cannot read registry without credentials", err
 		}
 		h, err := img.Digest()
 		if err != nil {

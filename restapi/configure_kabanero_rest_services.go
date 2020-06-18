@@ -40,7 +40,8 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.MessageGetTestHandler = message.GetTestHandlerFunc(func(params message.GetTestParams) middleware.Responder {
-		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("HIIIIIIIIIIII")})
+		fmt.Println("Entered MessageGetTestHandler!")
+		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("HIIIIIIIIIIIIXXXXX")})
 	})
 
 	if api.MessageGetHandler == nil {
@@ -51,6 +52,10 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 
 	api.DescribeHandler = operations.DescribeHandlerFunc(func(params operations.DescribeParams) middleware.Responder {
 		fmt.Println("Entered DescribeHandler!")
+		// for i := 0; i < 1000; i++ {
+		// fmt.Println("Entered DescribeHandler!")
+		// }
+		fmt.Println("Entered DescribeHandler!")
 		describeStack, err := utils.DescribeStackFunc(params.StackName, params.Version)
 		if err != nil {
 			return operations.NewDescribeOK().WithPayload(&describeStack)
@@ -59,6 +64,7 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 	})
 
 	api.ListHandler = operations.ListHandlerFunc(func(params operations.ListParams) middleware.Responder {
+		fmt.Println("Entered ListHandler!")
 		fmt.Println("Entered ListHandler!")
 		listOfStacks, err := utils.ListStacksFunc()
 		if err != nil {
