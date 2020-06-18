@@ -155,6 +155,9 @@ func init() {
           "items": {
             "type": "object",
             "properties": {
+              "Image name": {
+                "type": "string"
+              },
               "digest check": {
                 "type": "string"
               },
@@ -348,6 +351,9 @@ func init() {
     "KabaneroStackStatusItems0": {
       "type": "object",
       "properties": {
+        "Image name": {
+          "type": "string"
+        },
         "digest check": {
           "type": "string"
         },

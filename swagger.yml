@@ -35,6 +35,8 @@ definitions:
               type: string
             kabanero digest:
               type: string
+            Image name:
+              type: string
     
   DescribeStack:
     type: object

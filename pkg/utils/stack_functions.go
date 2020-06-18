@@ -4,6 +4,7 @@ package utils
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -241,46 +242,24 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 	cl := getClientClient()
 
 	err = cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
-
+	listOfStacks := []*models.KabaneroStack{}
 	for _, onestack := range stacksUnstructured.Items {
 		fmt.Println("Stack:")
-		// stack := &kabanerov1alpha2.Stack{}
-		// mapstructure.Decode(onestack, &stack)
-		// fmt.Println(stack)
+		stack := models.KabaneroStack{}
 		oneStackBytes, err := onestack.MarshalJSON()
 		if err != nil {
 			panic(err.Error())
 		}
-		oneStackStr := string(oneStackBytes)
-		fmt.Println(oneStackStr)
-		fmt.Println("  ")
-	}
-
-	//cl := stackClient{make(map[string]*kabanerov1alpha2.Stack)}
-	deployedStacks := &kabanerov1alpha2.StackList{}
-	listOfStacks := []*models.KabaneroStack{}
-
-	fmt.Println("<<1>>")
-
-	//err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
-	if err != nil {
-		fmt.Println("error from listing deployedStacks:")
-		fmt.Println(err)
-		return listOfStacks, err
-	}
-
-	// Compare the list of currently deployed stacks and the stacks in the index.
-	fmt.Println("<<2>>")
-	for _, deployedStack := range deployedStacks.Items {
-		stack := models.KabaneroStack{}
-		stack.Name = deployedStack.GetName()
-		items := []models.KabaneroStackStatusItems0{}
-		fmt.Println("<<2.1>>")
-		for _, dStackStatusVersion := range deployedStack.Status.Versions {
-			fmt.Println("<<2.11>>")
+		var kabstack kabanerov1alpha2.Stack
+		json.Unmarshal(oneStackBytes, &kabstack)
+		stack.Name = kabstack.GetName()
+		fmt.Println("Stack Name:")
+		fmt.Println(stack.Name)
+		items := []*models.KabaneroStackStatusItems0{}
+		for _, dStackStatusVersion := range kabstack.Status.Versions {
 			item := models.KabaneroStackStatusItems0{}
-			item.Status = dStackStatusVersion.Status
-			item.Version = dStackStatusVersion.Version
+			fmt.Println(dStackStatusVersion.Status)
+			fmt.Println(dStackStatusVersion.Version)
 			var imageName string
 			var stackDigest string
 			for _, imageStatus := range dStackStatusVersion.Images[0:] {
@@ -290,14 +269,66 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 			item.KabaneroDigest = stackDigest
 			s := strings.Split(imageName, "/")
 			imgRegistry := s[0]
+			fmt.Println("imgRegistry:")
+			fmt.Println(imgRegistry)
 			var crDigest string
 			crDigest, err = RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
+			fmt.Println("crDigest:")
+			fmt.Println(crDigest)
+			item.ImageName = imageName
+			item.Status = dStackStatusVersion.Status
+			item.Version = dStackStatusVersion.Version
 			item.ImageDigest = crDigest
 			item.DigestCheck = DigestCheck(stackDigest, crDigest, item.Status)
-			items = append(items, item)
+			fmt.Println("item:")
+			fmt.Println(item)
+			items = append(items, &item)
+			stack.Status = items
 		}
 		listOfStacks = append(listOfStacks, &stack)
 	}
+
+	//cl := stackClient{make(map[string]*kabanerov1alpha2.Stack)}
+	//deployedStacks := &kabanerov1alpha2.StackList{}
+
+	fmt.Println("<<1>>")
+
+	// //err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
+	// if err != nil {
+	// 	fmt.Println("error from listing deployedStacks:")
+	// 	fmt.Println(err)
+	// 	return listOfStacks, err
+	// }
+
+	// // Compare the list of currently deployed stacks and the stacks in the index.
+	// fmt.Println("<<2>>")
+	// for _, deployedStack := range deployedStacks.Items {
+	// 	stack := models.KabaneroStack{}
+	// 	stack.Name = deployedStack.GetName()
+	// 	items := []models.KabaneroStackStatusItems0{}
+	// 	fmt.Println("<<2.1>>")
+	// 	for _, dStackStatusVersion := range deployedStack.Status.Versions {
+	// 		fmt.Println("<<2.11>>")
+	// 		item := models.KabaneroStackStatusItems0{}
+	// 		item.Status = dStackStatusVersion.Status
+	// 		item.Version = dStackStatusVersion.Version
+	// 		var imageName string
+	// 		var stackDigest string
+	// 		for _, imageStatus := range dStackStatusVersion.Images[0:] {
+	// 			stackDigest = imageStatus.Digest.Activation
+	// 			imageName = imageStatus.Image
+	// 		}
+	// 		item.KabaneroDigest = stackDigest
+	// 		s := strings.Split(imageName, "/")
+	// 		imgRegistry := s[0]
+	// 		var crDigest string
+	// 		crDigest, err = RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
+	// 		item.ImageDigest = crDigest
+	// 		item.DigestCheck = DigestCheck(stackDigest, crDigest, item.Status)
+	// 		items = append(items, item)
+	// 	}
+	// 	listOfStacks = append(listOfStacks, &stack)
+	// }
 	fmt.Println("<<3>>")
 	return listOfStacks, err
 }
@@ -405,7 +436,7 @@ func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 	//var seccret corev1.Secret
 	for _, secret := range secretsList.Items {
 		hostName = secret.ObjectMeta.Annotations[annotationKey]
-		fmt.Printf(" * hostname: %s \n", imgRegistry)
+		//fmt.Printf(" * hostname: %s \n", imgRegistry)
 		if strings.Contains(hostName, "docker.io") {
 			username = secret.Data["username"]
 			password = secret.Data["password"]
