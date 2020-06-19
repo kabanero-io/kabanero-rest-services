@@ -167,36 +167,28 @@ func resolveDockerConfRegKey(imgRegistry string) string {
 }
 
 func getClientClient() client.Client {
-	// // Get a config to talk to the apiserver
-	// cfg, err := config.GetConfig()
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// // Create a new Cmd to provide shared dependencies and start components
-	// mgr, err := manager.New(cfg, manager.Options{
-	// 	Namespace: getHookNamespace(),
-	// })
-
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-
-	// if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-	// 	panic(err.Error())
-	// }
-	// fmt.Println("<< starting manager")
-	// // Start the Cmd
-	// if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-	// 	panic(err.Error())
-	// }
-	// fmt.Println("<< manager started")
-	// return mgr.GetClient()
-
 	cl, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
 		panic(err.Error())
 	}
 	return cl
+}
+
+func getStacks() (*unstructured.UnstructuredList, error) {
+	stacksUnstructured := &unstructured.UnstructuredList{}
+	stacksUnstructured.SetKind("Stack")
+	stacksUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "Stack",
+		Group:   kabanerov1alpha2.SchemeGroupVersion.Group,
+		Version: kabanerov1alpha2.SchemeGroupVersion.Version,
+	})
+
+	ctx := context.Background()
+	cl := getClientClient()
+	ns := getHookNamespace()
+	err := cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
+
+	return stacksUnstructured, err
 }
 
 // list all stacks in namespace
@@ -230,18 +222,22 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 	}
 
 	fmt.Println("<<1.0>>")
-	stacksUnstructured := &unstructured.UnstructuredList{}
-	stacksUnstructured.SetKind("Stack")
-	stacksUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
-		Kind:    "Stack",
-		Group:   kabanerov1alpha2.SchemeGroupVersion.Group,
-		Version: kabanerov1alpha2.SchemeGroupVersion.Version,
-	})
 
-	ctx := context.Background()
-	cl := getClientClient()
+	// stacksUnstructured := &unstructured.UnstructuredList{}
+	// stacksUnstructured.SetKind("Stack")
+	// stacksUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
+	// 	Kind:    "Stack",
+	// 	Group:   kabanerov1alpha2.SchemeGroupVersion.Group,
+	// 	Version: kabanerov1alpha2.SchemeGroupVersion.Version,
+	// })
 
-	err = cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
+	// ctx := context.Background()
+	// cl := getClientClient()
+
+	// err = cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
+
+	stacksUnstructured, err := getStacks()
+
 	listOfStacks := []*models.KabaneroStack{}
 	for _, onestack := range stacksUnstructured.Items {
 		fmt.Println("Stack:")
@@ -288,94 +284,55 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 		listOfStacks = append(listOfStacks, &stack)
 	}
 
-	//cl := stackClient{make(map[string]*kabanerov1alpha2.Stack)}
-	//deployedStacks := &kabanerov1alpha2.StackList{}
-
-	fmt.Println("<<1>>")
-
-	// //err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
-	// if err != nil {
-	// 	fmt.Println("error from listing deployedStacks:")
-	// 	fmt.Println(err)
-	// 	return listOfStacks, err
-	// }
-
-	// // Compare the list of currently deployed stacks and the stacks in the index.
-	// fmt.Println("<<2>>")
-	// for _, deployedStack := range deployedStacks.Items {
-	// 	stack := models.KabaneroStack{}
-	// 	stack.Name = deployedStack.GetName()
-	// 	items := []models.KabaneroStackStatusItems0{}
-	// 	fmt.Println("<<2.1>>")
-	// 	for _, dStackStatusVersion := range deployedStack.Status.Versions {
-	// 		fmt.Println("<<2.11>>")
-	// 		item := models.KabaneroStackStatusItems0{}
-	// 		item.Status = dStackStatusVersion.Status
-	// 		item.Version = dStackStatusVersion.Version
-	// 		var imageName string
-	// 		var stackDigest string
-	// 		for _, imageStatus := range dStackStatusVersion.Images[0:] {
-	// 			stackDigest = imageStatus.Digest.Activation
-	// 			imageName = imageStatus.Image
-	// 		}
-	// 		item.KabaneroDigest = stackDigest
-	// 		s := strings.Split(imageName, "/")
-	// 		imgRegistry := s[0]
-	// 		var crDigest string
-	// 		crDigest, err = RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
-	// 		item.ImageDigest = crDigest
-	// 		item.DigestCheck = DigestCheck(stackDigest, crDigest, item.Status)
-	// 		items = append(items, item)
-	// 	}
-	// 	listOfStacks = append(listOfStacks, &stack)
-	// }
 	fmt.Println("<<3>>")
 	return listOfStacks, err
 }
 
 // describe stack in detail
 func DescribeStackFunc(name string, version string) (models.DescribeStack, error) {
-	ctx := context.Background()
-	cl := stackClient{make(map[string]*kabanerov1alpha2.Stack)}
-	deployedStacks := &kabanerov1alpha2.StackList{}
-	var stack models.DescribeStack
-	var ns string
 	var err error
-	ns = getHookNamespace()
-	err = cl.List(ctx, deployedStacks, client.InNamespace(ns))
-	if err != nil {
-		return stack, err
-	}
+	ns := getHookNamespace()
 
-	for _, deployedStack := range deployedStacks.Items {
-		stackName := deployedStack.GetName()
-		if stackName == name {
-			for _, dStackStatusVersion := range deployedStack.Status.Versions {
+	describeStack := models.DescribeStack{}
+	stacksUnstructured, err := getStacks()
+
+	for _, onestack := range stacksUnstructured.Items {
+		oneStackBytes, err := onestack.MarshalJSON()
+		if err != nil {
+			panic(err.Error())
+		}
+		var kabstack kabanerov1alpha2.Stack
+		json.Unmarshal(oneStackBytes, &kabstack)
+		nameFromStack := kabstack.GetName()
+		if nameFromStack == name {
+			for _, dStackStatusVersion := range kabstack.Status.Versions {
 				if dStackStatusVersion.Version == version {
 					var stackDigest string
+					var imageName string
 					for _, imageStatus := range dStackStatusVersion.Images[0:] {
 						stackDigest = imageStatus.Digest.Activation
-						stack.Image = imageStatus.Image
+						imageName = imageStatus.Image
 					}
-					s := strings.Split(stack.Image, "/")
+					s := strings.Split(imageName, "/")
 					imgRegistry := s[0]
-					crDigest, err := RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, stack.Image)
+					crDigest, err := RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
 					if err != nil {
-						return stack, err
+						return describeStack, err
 					}
-					stack.Name = name
-					stack.Version = version
-					stack.Status = dStackStatusVersion.Status
-					stack.DigestCheck = DigestCheck(stackDigest, crDigest, dStackStatusVersion.Status)
-					stack.KabaneroDigest = stackDigest
-					stack.ImageDigest = crDigest
-					stack.Project = ns
+					describeStack.Name = kabstack.GetName()
+					describeStack.ImageName = imageName
+					describeStack.KabaneroDigest = stackDigest
+					describeStack.Status = dStackStatusVersion.Status
+					describeStack.Version = dStackStatusVersion.Version
+					describeStack.ImageDigest = crDigest
+					describeStack.DigestCheck = DigestCheck(stackDigest, crDigest, dStackStatusVersion.Status)
+					describeStack.Project = ns
 					break
 				}
 			}
 		}
 	}
-	return stack, err
+	return describeStack, err
 }
 
 // compares digest to make sure they are identical

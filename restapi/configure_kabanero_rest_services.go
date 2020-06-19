@@ -44,6 +44,10 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("HIIIIIIIIIIIIXXXXX")})
 	})
 
+	api.MessageGetVersionHandler = message.GetVersionHandlerFunc(func(params message.GetVersionParams) middleware.Responder {
+		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("Kabanero Rest Services: version 0.11")})
+	})
+
 	if api.MessageGetHandler == nil {
 		api.MessageGetHandler = message.GetHandlerFunc(func(params message.GetParams) middleware.Responder {
 			return middleware.NotImplemented("operation message.Get has not yet been implemented")

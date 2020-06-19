@@ -37,6 +37,7 @@ definitions:
               type: string
             Image name:
               type: string
+            
     
   DescribeStack:
     type: object
@@ -56,6 +57,8 @@ definitions:
       image digest:
         type: string
       kabanero digest:
+        type: string
+      image name:
         type: string
             
   # END stack related defs 
@@ -91,6 +94,16 @@ paths:
           description: standard message response
           schema:
             $ref: "#/definitions/message"
+
+  /version:
+    get:
+      tags:
+        - message
+      responses:
+        200:
+          description: standard message response
+          schema:
+            $ref: "#/definitions/message"
               
 
   /v1/stacks:
@@ -112,12 +125,12 @@ paths:
     get:
       operationId: describe
       parameters:
-      - in: path
-        name: stackName
+      - name: stackName
+        in: path
         type: string
         required: true
-      - in: path
-        name: version
+      - name: version
+        in: path
         type: string
         required: true
       responses:

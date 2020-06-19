@@ -49,6 +49,9 @@ func NewKabaneroRestServicesAPI(spec *loads.Document) *KabaneroRestServicesAPI {
 		MessageGetTestHandler: message.GetTestHandlerFunc(func(params message.GetTestParams) middleware.Responder {
 			return middleware.NotImplemented("operation message.GetTest has not yet been implemented")
 		}),
+		MessageGetVersionHandler: message.GetVersionHandlerFunc(func(params message.GetVersionParams) middleware.Responder {
+			return middleware.NotImplemented("operation message.GetVersion has not yet been implemented")
+		}),
 		DescribeHandler: DescribeHandlerFunc(func(params DescribeParams) middleware.Responder {
 			return middleware.NotImplemented("operation Describe has not yet been implemented")
 		}),
@@ -92,6 +95,8 @@ type KabaneroRestServicesAPI struct {
 	MessageGetHandler message.GetHandler
 	// MessageGetTestHandler sets the operation handler for the get test operation
 	MessageGetTestHandler message.GetTestHandler
+	// MessageGetVersionHandler sets the operation handler for the get version operation
+	MessageGetVersionHandler message.GetVersionHandler
 	// DescribeHandler sets the operation handler for the describe operation
 	DescribeHandler DescribeHandler
 	// ListHandler sets the operation handler for the list operation
@@ -167,6 +172,9 @@ func (o *KabaneroRestServicesAPI) Validate() error {
 	}
 	if o.MessageGetTestHandler == nil {
 		unregistered = append(unregistered, "message.GetTestHandler")
+	}
+	if o.MessageGetVersionHandler == nil {
+		unregistered = append(unregistered, "message.GetVersionHandler")
 	}
 	if o.DescribeHandler == nil {
 		unregistered = append(unregistered, "DescribeHandler")
@@ -270,6 +278,10 @@ func (o *KabaneroRestServicesAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/test"] = message.NewGetTest(o.context, o.MessageGetTestHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/version"] = message.NewGetVersion(o.context, o.MessageGetVersionHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

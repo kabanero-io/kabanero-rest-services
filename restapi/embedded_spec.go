@@ -112,6 +112,21 @@ func init() {
           }
         }
       }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "message"
+        ],
+        "responses": {
+          "200": {
+            "description": "standard message response",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -125,6 +140,9 @@ func init() {
           "type": "string"
         },
         "image digest": {
+          "type": "string"
+        },
+        "image name": {
           "type": "string"
         },
         "kabanero digest": {
@@ -302,6 +320,21 @@ func init() {
           }
         }
       }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "message"
+        ],
+        "responses": {
+          "200": {
+            "description": "standard message response",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -315,6 +348,9 @@ func init() {
           "type": "string"
         },
         "image digest": {
+          "type": "string"
+        },
+        "image name": {
           "type": "string"
         },
         "kabanero digest": {

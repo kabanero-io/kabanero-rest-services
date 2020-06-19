@@ -24,6 +24,9 @@ type DescribeStack struct {
 	// image digest
 	ImageDigest string `json:"image digest,omitempty"`
 
+	// image name
+	ImageName string `json:"image name,omitempty"`
+
 	// kabanero digest
 	KabaneroDigest string `json:"kabanero digest,omitempty"`
 
