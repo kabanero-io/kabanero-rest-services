@@ -65,7 +65,15 @@ definitions:
         items:
           type: object
           properties:
-            app:
+            instance:
+              type: string
+            managedby:
+              type: string
+            name:
+              type: string
+            partof:
+              type: string
+            version:
               type: string
       
             

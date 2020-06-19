@@ -219,14 +219,20 @@ func getApps(ns string, name string, version string) []*models.DescribeStackApps
 		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
 		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
 		deployName := d.ObjectMeta.Labels["stack.appsody.dev/id"]
-		deplopyVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
+		deployVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
 		fmt.Println("deployName:")
 		fmt.Println(deployName)
 		fmt.Println("deployVersions:")
-		fmt.Println(deplopyVersion)
-		if deployName == name && deplopyVersion == version {
+		fmt.Println(deployVersion)
+		if deployName == name && deployVersion == version {
 			fmt.Println("matched")
-			app.App = d.String()
+
+			app.Instance = d.ObjectMeta.Labels["app.kubernetes.io/instance"]
+			app.Managedby = d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
+			app.Name = d.ObjectMeta.Labels["app.kubernetes.io/name"]
+			app.Partof = d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
+			app.Version = d.ObjectMeta.Labels["app.kubernetes.io/version"]
+
 			apps = append(apps, &app)
 		}
 	}

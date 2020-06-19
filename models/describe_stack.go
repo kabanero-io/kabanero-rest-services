@@ -111,8 +111,20 @@ func (m *DescribeStack) UnmarshalBinary(b []byte) error {
 // swagger:model DescribeStackAppsItems0
 type DescribeStackAppsItems0 struct {
 
-	// app
-	App string `json:"app,omitempty"`
+	// instance
+	Instance string `json:"instance,omitempty"`
+
+	// managedby
+	Managedby string `json:"managedby,omitempty"`
+
+	// name
+	Name string `json:"name,omitempty"`
+
+	// partof
+	Partof string `json:"partof,omitempty"`
+
+	// version
+	Version string `json:"version,omitempty"`
 }
 
 // Validate validates this describe stack apps items0

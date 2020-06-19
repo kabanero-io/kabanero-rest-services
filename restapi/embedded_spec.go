@@ -138,7 +138,19 @@ func init() {
           "items": {
             "type": "object",
             "properties": {
-              "app": {
+              "instance": {
+                "type": "string"
+              },
+              "managedby": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "partof": {
+                "type": "string"
+              },
+              "version": {
                 "type": "string"
               }
             }
@@ -390,7 +402,19 @@ func init() {
     "DescribeStackAppsItems0": {
       "type": "object",
       "properties": {
-        "app": {
+        "instance": {
+          "type": "string"
+        },
+        "managedby": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "partof": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
