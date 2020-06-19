@@ -191,14 +191,12 @@ func getStacks() (*unstructured.UnstructuredList, error) {
 	return stacksUnstructured, err
 }
 
-// list all stacks in namespace
-func ListStacksFunc() ([]*models.KabaneroStack, error) {
-	fmt.Println("Entered ListStacksFunc!")
-
-	ns := getHookNamespace()
-	fmt.Println("namespace:")
-	fmt.Println(ns)
-
+func getApps(ns string, name string, version string) []*models.DescribeStackAppsItems0 {
+	fmt.Println("in getApps():")
+	fmt.Println("name:")
+	fmt.Println(name)
+	fmt.Println("version:")
+	fmt.Println(version)
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -208,18 +206,38 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 	if err != nil {
 		panic(err.Error())
 	}
-
+	apps := []*models.DescribeStackAppsItems0{}
 	deploymentsClient := clSet.AppsV1().Deployments(ns)
 	list, err := deploymentsClient.List(metav1.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
 	for _, d := range list.Items {
+		app := models.DescribeStackAppsItems0{}
 		fmt.Printf(" * %s \n", d.Name)
 		fmt.Println("labels")
 		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
 		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
+		deployName := d.ObjectMeta.Labels["stack.appsody.dev/id"]
+		deplopyVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
+		fmt.Println("deployName:")
+		fmt.Println(deployName)
+		fmt.Println("deployVersions:")
+		fmt.Println(deplopyVersion)
+		if deployName == name && deplopyVersion == version {
+			fmt.Println("matched")
+			app.App = d.String()
+			apps = append(apps, &app)
+		}
 	}
+	return apps
+}
+
+// list all stacks in namespace
+func ListStacksFunc() ([]*models.KabaneroStack, error) {
+	fmt.Println("Entered ListStacksFunc!")
+
+	ns := getHookNamespace()
 
 	fmt.Println("<<1.0>>")
 
@@ -268,7 +286,8 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 			fmt.Println("imgRegistry:")
 			fmt.Println(imgRegistry)
 			var crDigest string
-			crDigest, err = RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
+			imageNameWVersion := imageName + ":" + dStackStatusVersion.Version
+			crDigest, err = retrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageNameWVersion)
 			fmt.Println("crDigest:")
 			fmt.Println(crDigest)
 			item.ImageName = imageName
@@ -315,7 +334,8 @@ func DescribeStackFunc(name string, version string) (models.DescribeStack, error
 					}
 					s := strings.Split(imageName, "/")
 					imgRegistry := s[0]
-					crDigest, err := RetrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageName)
+					imageNameWVersion := imageName + ":" + version
+					crDigest, err := retrieveImageDigestFromContainerRegistry(ns, imgRegistry, true, myLogger, imageNameWVersion)
 					if err != nil {
 						return describeStack, err
 					}
@@ -327,6 +347,8 @@ func DescribeStackFunc(name string, version string) (models.DescribeStack, error
 					describeStack.ImageDigest = crDigest
 					describeStack.DigestCheck = DigestCheck(stackDigest, crDigest, dStackStatusVersion.Status)
 					describeStack.Project = ns
+					apps := getApps(ns, name, version)
+					describeStack.Apps = apps
 					break
 				}
 			}
@@ -369,7 +391,9 @@ func DigestCheck(stackDigest string, crDigest string, status string) string {
 }
 
 // Retrieves the input image digest from the hosting repository.
-func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry string, skipCertVerification bool, logr logr.Logger, image string) (string, error) {
+func retrieveImageDigestFromContainerRegistry(namespace string, imgRegistry string, skipCertVerification bool, logr logr.Logger, image string) (string, error) {
+	fmt.Println("in retrieveImageDigestFromContainerRegistry:")
+	fmt.Printf(" * namespace: %s imgRegistry: %s image: %s\n", namespace, imgRegistry, image)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -398,7 +422,7 @@ func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 			username = secret.Data["username"]
 			password = secret.Data["password"]
 			//seccret = secret
-			//fmt.Printf(" * user: %s password: %s\n", username, password)
+			fmt.Printf(" * user: %s password: %s\n", username, password)
 			break
 		}
 	}
@@ -424,6 +448,7 @@ func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 	}
 	var digest string
 	if len(username) == 0 {
+		fmt.Println("<<1>>")
 		img, err := remote.Image(ref,
 			remote.WithPlatform(v1.Platform{Architecture: runtime.GOARCH, OS: runtime.GOOS}),
 			remote.WithTransport(transport))
@@ -436,6 +461,7 @@ func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 		}
 		digest = h.Hex
 	} else {
+		fmt.Println("<<2>>")
 		img, err := remote.Image(ref,
 			remote.WithAuth(authenticator),
 			remote.WithPlatform(v1.Platform{Architecture: runtime.GOARCH, OS: runtime.GOOS}),
@@ -443,39 +469,21 @@ func RetrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 		if err != nil {
 			return "", err
 		}
+		fmt.Println("img")
+		fmt.Println(img)
 		h, err := img.Digest()
+		fmt.Println("h")
+		fmt.Println(h)
 		if err != nil {
 			return "", err
 		}
 		digest = h.Hex
 	}
 
+	fmt.Printf(" * digest: %s \n", digest)
+
 	// Get the image's Digest (i.e sha256:8f095a6e...)
 
 	// Return the actual digest part only.
 	return digest, nil
 }
-
-// this code may change to just use unstructured eventually
-// e.g.
-//
-// func getCRWInstance(ctx context.Context, k *kabanerov1alpha2.Kabanero, c client.Client) (*unstructured.Unstructured, error) {
-// 	crwInst := &unstructured.Unstructured{}
-// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
-// 		Kind:    "CheCluster",
-// 		Group:   "org.eclipse.che",
-// 		Version: "v1",
-// 	})
-// 	err := c.Get(ctx, client.ObjectKey{
-// 		Name:      crwOperatorCRNameSuffix,
-// 		Namespace: k.ObjectMeta.Namespace}, crwInst)
-// 	return crwInst, err
-// }
-// server, found, err := unstructured.NestedFieldCopy(crwInst.Object, "spec", "server")
-
-// stackInst := &unstructured.Unstructured{}
-// 	crwInst.SetGroupVersionKind(schema.GroupVersionKind{
-// 		Kind:    "CheCluster",
-// 		Group:   "org.eclipse.che",
-// 		Version: "v1",
-// 	})

@@ -133,6 +133,17 @@ func init() {
     "DescribeStack": {
       "type": "object",
       "properties": {
+        "apps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "app": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "digest check": {
           "type": "string"
         },
@@ -341,6 +352,12 @@ func init() {
     "DescribeStack": {
       "type": "object",
       "properties": {
+        "apps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DescribeStackAppsItems0"
+          }
+        },
         "digest check": {
           "type": "string"
         },
@@ -366,6 +383,14 @@ func init() {
           "type": "string"
         },
         "version": {
+          "type": "string"
+        }
+      }
+    },
+    "DescribeStackAppsItems0": {
+      "type": "object",
+      "properties": {
+        "app": {
           "type": "string"
         }
       }

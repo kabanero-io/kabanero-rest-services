@@ -60,6 +60,14 @@ definitions:
         type: string
       image name:
         type: string
+      apps:
+        type: array
+        items:
+          type: object
+          properties:
+            app:
+              type: string
+      
             
   # END stack related defs 
   
