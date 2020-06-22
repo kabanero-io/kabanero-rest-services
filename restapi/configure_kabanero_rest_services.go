@@ -56,23 +56,18 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 
 	api.DescribeHandler = operations.DescribeHandlerFunc(func(params operations.DescribeParams) middleware.Responder {
 		fmt.Println("Entered DescribeHandler!")
-		// for i := 0; i < 1000; i++ {
-		// fmt.Println("Entered DescribeHandler!")
-		// }
-		fmt.Println("Entered DescribeHandler!")
 		describeStack, err := utils.DescribeStackFunc(params.StackName, params.Version)
 		if err != nil {
-			return operations.NewDescribeOK().WithPayload(&describeStack)
+			return operations.NewDescribeInternalServerError().WithPayload(&models.Message{Message: swag.String("Error occured during describe processing: " + err.Error())})
 		}
 		return operations.NewDescribeOK().WithPayload(&describeStack)
 	})
 
 	api.ListHandler = operations.ListHandlerFunc(func(params operations.ListParams) middleware.Responder {
 		fmt.Println("Entered ListHandler!")
-		fmt.Println("Entered ListHandler!")
 		listOfStacks, err := utils.ListStacksFunc()
 		if err != nil {
-			return operations.NewListOK().WithPayload(listOfStacks)
+			return operations.NewListInternalServerError().WithPayload(&models.Message{Message: swag.String("Error occured during list processing: " + err.Error())})
 		}
 		return operations.NewListOK().WithPayload(listOfStacks)
 	})

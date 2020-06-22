@@ -87,6 +87,18 @@ func init() {
             "schema": {
               "$ref": "#/definitions/DescribeStack"
             }
+          },
+          "500": {
+            "description": "describe stack error",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       }
@@ -96,12 +108,18 @@ func init() {
         "operationId": "list",
         "responses": {
           "200": {
-            "description": "login successful",
+            "description": "list successful",
             "schema": {
               "type": "array",
               "items": {
                 "$ref": "#/definitions/KabaneroStack"
               }
+            }
+          },
+          "500": {
+            "description": "list stack error",
+            "schema": {
+              "$ref": "#/definitions/message"
             }
           },
           "default": {
@@ -318,6 +336,18 @@ func init() {
             "schema": {
               "$ref": "#/definitions/DescribeStack"
             }
+          },
+          "500": {
+            "description": "describe stack error",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       }
@@ -327,12 +357,18 @@ func init() {
         "operationId": "list",
         "responses": {
           "200": {
-            "description": "login successful",
+            "description": "list successful",
             "schema": {
               "type": "array",
               "items": {
                 "$ref": "#/definitions/KabaneroStack"
               }
+            }
+          },
+          "500": {
+            "description": "list stack error",
+            "schema": {
+              "$ref": "#/definitions/message"
             }
           },
           "default": {

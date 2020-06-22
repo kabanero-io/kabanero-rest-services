@@ -16,7 +16,7 @@ import (
 // ListOKCode is the HTTP code returned for type ListOK
 const ListOKCode int = 200
 
-/*ListOK login successful
+/*ListOK list successful
 
 swagger:response listOK
 */
@@ -57,6 +57,50 @@ func (o *ListOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer
 
 	if err := producer.Produce(rw, payload); err != nil {
 		panic(err) // let the recovery middleware deal with this
+	}
+}
+
+// ListInternalServerErrorCode is the HTTP code returned for type ListInternalServerError
+const ListInternalServerErrorCode int = 500
+
+/*ListInternalServerError list stack error
+
+swagger:response listInternalServerError
+*/
+type ListInternalServerError struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Message `json:"body,omitempty"`
+}
+
+// NewListInternalServerError creates ListInternalServerError with default headers values
+func NewListInternalServerError() *ListInternalServerError {
+
+	return &ListInternalServerError{}
+}
+
+// WithPayload adds the payload to the list internal server error response
+func (o *ListInternalServerError) WithPayload(payload *models.Message) *ListInternalServerError {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the list internal server error response
+func (o *ListInternalServerError) SetPayload(payload *models.Message) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *ListInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(500)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
 	}
 }
 
