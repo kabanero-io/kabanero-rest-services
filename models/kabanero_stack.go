@@ -87,14 +87,14 @@ func (m *KabaneroStack) UnmarshalBinary(b []byte) error {
 // swagger:model KabaneroStackStatusItems0
 type KabaneroStackStatusItems0 struct {
 
-	// image name
-	ImageName string `json:"Image name,omitempty"`
-
 	// digest check
 	DigestCheck string `json:"digest check,omitempty"`
 
 	// image digest
 	ImageDigest string `json:"image digest,omitempty"`
+
+	// image name
+	ImageName string `json:"image name,omitempty"`
 
 	// kabanero digest
 	KabaneroDigest string `json:"kabanero digest,omitempty"`

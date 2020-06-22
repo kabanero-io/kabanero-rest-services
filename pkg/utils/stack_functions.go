@@ -191,6 +191,9 @@ func getStacks() (*unstructured.UnstructuredList, error) {
 	return stacksUnstructured, err
 }
 
+// when we get RBAC permissions then remove ns parm
+// iterate through target namespaces to scan for apps
+// using this stack
 func getApps(ns string, name string, version string) []*models.DescribeStackAppsItems0 {
 	fmt.Println("in getApps():")
 	fmt.Println("name:")
@@ -207,6 +210,12 @@ func getApps(ns string, name string, version string) []*models.DescribeStackApps
 		panic(err.Error())
 	}
 	apps := []*models.DescribeStackAppsItems0{}
+
+	// var targetnamespaceList []string
+	// k := &kabanerov1alpha2.Kabanero{}
+	// targetnamespaceList = k.Spec.TargetNamespaces
+
+	//for _, ns := range targetnamespaceList {
 	deploymentsClient := clSet.AppsV1().Deployments(ns)
 	list, err := deploymentsClient.List(metav1.ListOptions{})
 	if err != nil {
@@ -236,6 +245,7 @@ func getApps(ns string, name string, version string) []*models.DescribeStackApps
 			apps = append(apps, &app)
 		}
 	}
+	//}
 	return apps
 }
 
@@ -244,21 +254,6 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 	fmt.Println("Entered ListStacksFunc!")
 
 	ns := getHookNamespace()
-
-	fmt.Println("<<1.0>>")
-
-	// stacksUnstructured := &unstructured.UnstructuredList{}
-	// stacksUnstructured.SetKind("Stack")
-	// stacksUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
-	// 	Kind:    "Stack",
-	// 	Group:   kabanerov1alpha2.SchemeGroupVersion.Group,
-	// 	Version: kabanerov1alpha2.SchemeGroupVersion.Version,
-	// })
-
-	// ctx := context.Background()
-	// cl := getClientClient()
-
-	// err = cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
 
 	stacksUnstructured, err := getStacks()
 
@@ -309,7 +304,6 @@ func ListStacksFunc() ([]*models.KabaneroStack, error) {
 		listOfStacks = append(listOfStacks, &stack)
 	}
 
-	fmt.Println("<<3>>")
 	return listOfStacks, err
 }
 
@@ -428,7 +422,7 @@ func retrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 			username = secret.Data["username"]
 			password = secret.Data["password"]
 			//seccret = secret
-			fmt.Printf(" * user: %s password: %s\n", username, password)
+			//fmt.Printf(" * user: %s password: %s\n", username, password)
 			break
 		}
 	}
