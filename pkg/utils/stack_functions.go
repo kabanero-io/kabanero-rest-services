@@ -227,11 +227,11 @@ func getApps(ns string, name string, version string) []*models.DescribeStackApps
 		if deployName == name && deployVersion == version {
 			fmt.Println("matched")
 
-			app.Instance = d.ObjectMeta.Labels["app.kubernetes.io/instance"]
-			app.Managedby = d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
-			app.Name = d.ObjectMeta.Labels["app.kubernetes.io/name"]
-			app.Partof = d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
-			app.Version = d.ObjectMeta.Labels["app.kubernetes.io/version"]
+			app.Instance = "app.kubernetes.io/instance: " + d.ObjectMeta.Labels["app.kubernetes.io/instance"]
+			app.Managedby = "app.kubernetes.io/managed-by: " + d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
+			app.Name = "app.kubernetes.io/name: " + d.ObjectMeta.Labels["app.kubernetes.io/name"]
+			app.Partof = "app.kubernetes.io/part-of: " + d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
+			app.Version = "app.kubernetes.io/version: " + d.ObjectMeta.Labels["app.kubernetes.io/version"]
 
 			apps = append(apps, &app)
 		}
