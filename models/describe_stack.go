@@ -111,20 +111,20 @@ func (m *DescribeStack) UnmarshalBinary(b []byte) error {
 // swagger:model DescribeStackAppsItems0
 type DescribeStackAppsItems0 struct {
 
-	// instance
-	Instance string `json:"instance,omitempty"`
+	// app kubernetes io instance
+	AppKubernetesIoInstance string `json:"app.kubernetes.io/instance,omitempty"`
 
-	// managedby
-	Managedby string `json:"managedby,omitempty"`
+	// app kubernetes io managed by
+	AppKubernetesIoManagedBy string `json:"app.kubernetes.io/managed-by,omitempty"`
 
-	// name
-	Name string `json:"name,omitempty"`
+	// app kubernetes io name
+	AppKubernetesIoName string `json:"app.kubernetes.io/name,omitempty"`
 
-	// partof
-	Partof string `json:"partof,omitempty"`
+	// app kubernetes io part of
+	AppKubernetesIoPartOf string `json:"app.kubernetes.io/part-of,omitempty"`
 
-	// version
-	Version string `json:"version,omitempty"`
+	// app kubernetes io version
+	AppKubernetesIoVersion string `json:"app.kubernetes.io/version,omitempty"`
 }
 
 // Validate validates this describe stack apps items0

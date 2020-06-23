@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtimer "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -174,6 +175,33 @@ func getClientClient() client.Client {
 	return cl
 }
 
+func getKabanero() (kabanerov1alpha2.Kabanero, error) {
+	kabUnstructured := &unstructured.Unstructured{}
+	kabUnstructured.SetKind("Kabanero")
+	kabUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
+		Kind:    "Kabanero",
+		Group:   kabanerov1alpha2.SchemeGroupVersion.Group,
+		Version: kabanerov1alpha2.SchemeGroupVersion.Version,
+	})
+
+	ctx := context.Background()
+	cl := getClientClient()
+	ns := getHookNamespace()
+	n := types.NamespacedName{}
+	n.Name = ns
+	n.Namespace = ns
+	err := cl.Get(ctx, n, kabUnstructured)
+
+	kabaneroBytes, err := kabUnstructured.MarshalJSON()
+	if err != nil {
+		panic(err.Error())
+	}
+	var kabaneroInstance kabanerov1alpha2.Kabanero
+	json.Unmarshal(kabaneroBytes, &kabaneroInstance)
+
+	return kabaneroInstance, err
+}
+
 func getStacks() (*unstructured.UnstructuredList, error) {
 	stacksUnstructured := &unstructured.UnstructuredList{}
 	stacksUnstructured.SetKind("Stack")
@@ -191,6 +219,55 @@ func getStacks() (*unstructured.UnstructuredList, error) {
 	return stacksUnstructured, err
 }
 
+func getDeployments(name string, version string, ns string) ([]*models.DescribeStackAppsItems0, error) {
+	fmt.Println("entering deployments")
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// creates the clientset
+	clSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println("namespace")
+	fmt.Println(ns)
+	apps := []*models.DescribeStackAppsItems0{}
+	deploymentsClient := clSet.AppsV1().Deployments(ns)
+	list, err := deploymentsClient.List(metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	for _, d := range list.Items {
+		app := models.DescribeStackAppsItems0{}
+
+		deployName := d.ObjectMeta.Labels["stack.appsody.dev/id"]
+		deployVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
+
+		if deployName == name && deployVersion == version {
+			fmt.Println("matched")
+			fmt.Println("deployName:")
+			fmt.Println(deployName)
+			fmt.Println("deployVersions:")
+			fmt.Println(deployVersion)
+			fmt.Println("labels")
+			fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
+			fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
+
+			app.AppKubernetesIoInstance = d.ObjectMeta.Labels["app.kubernetes.io/instance"]
+			app.AppKubernetesIoManagedBy = d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
+			app.AppKubernetesIoName = d.ObjectMeta.Labels["app.kubernetes.io/name"]
+			app.AppKubernetesIoPartOf = d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
+			app.AppKubernetesIoVersion = d.ObjectMeta.Labels["app.kubernetes.io/version"]
+
+			apps = append(apps, &app)
+		}
+	}
+	return apps, err
+}
+
 // when we get RBAC permissions then remove ns parm
 // iterate through target namespaces to scan for apps
 // using this stack
@@ -200,52 +277,70 @@ func getApps(ns string, name string, version string) []*models.DescribeStackApps
 	fmt.Println(name)
 	fmt.Println("version:")
 	fmt.Println(version)
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
+	// config, err := rest.InClusterConfig()
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 	// creates the clientset
-	clSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err.Error())
-	}
+	// clSet, err := kubernetes.NewForConfig(config)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 	apps := []*models.DescribeStackAppsItems0{}
 
-	// var targetnamespaceList []string
-	// k := &kabanerov1alpha2.Kabanero{}
-	// targetnamespaceList = k.Spec.TargetNamespaces
-
-	//for _, ns := range targetnamespaceList {
-	deploymentsClient := clSet.AppsV1().Deployments(ns)
-	list, err := deploymentsClient.List(metav1.ListOptions{})
+	var targetnamespaceList []string
+	k, err := getKabanero()
 	if err != nil {
 		panic(err)
 	}
-	for _, d := range list.Items {
-		app := models.DescribeStackAppsItems0{}
-		fmt.Printf(" * %s \n", d.Name)
-		fmt.Println("labels")
-		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
-		fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
-		deployName := d.ObjectMeta.Labels["stack.appsody.dev/id"]
-		deployVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
-		fmt.Println("deployName:")
-		fmt.Println(deployName)
-		fmt.Println("deployVersions:")
-		fmt.Println(deployVersion)
-		if deployName == name && deployVersion == version {
-			fmt.Println("matched")
 
-			app.Instance = "app.kubernetes.io/instance: " + d.ObjectMeta.Labels["app.kubernetes.io/instance"]
-			app.Managedby = "app.kubernetes.io/managed-by: " + d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
-			app.Name = "app.kubernetes.io/name: " + d.ObjectMeta.Labels["app.kubernetes.io/name"]
-			app.Partof = "app.kubernetes.io/part-of: " + d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
-			app.Version = "app.kubernetes.io/version: " + d.ObjectMeta.Labels["app.kubernetes.io/version"]
+	targetnamespaceList = k.Spec.TargetNamespaces
 
-			apps = append(apps, &app)
+	myapps, err := getDeployments(name, version, ns)
+
+	apps = append(apps, myapps[0])
+
+	for _, nspace := range targetnamespaceList {
+		deployapps, err := getDeployments(name, version, nspace)
+		if err != nil {
+			panic(err)
 		}
+		for _, application := range deployapps {
+			apps = append(apps, application)
+		}
+		// fmt.Println("namespace")
+		// fmt.Println(ns)
+
+		// deploymentsClient := clSet.AppsV1().Deployments(ns)
+		// list, err := deploymentsClient.List(metav1.ListOptions{})
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// for _, d := range list.Items {
+		// 	app := models.DescribeStackAppsItems0{}
+		// 	fmt.Printf(" * %s \n", d.Name)
+		// 	fmt.Println("labels")
+		// 	fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
+		// 	fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
+		// 	deployName := d.ObjectMeta.Labels["stack.appsody.dev/id"]
+		// 	deployVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
+		// 	fmt.Println("deployName:")
+		// 	fmt.Println(deployName)
+		// 	fmt.Println("deployVersions:")
+		// 	fmt.Println(deployVersion)
+		// 	if deployName == name && deployVersion == version {
+		// 		fmt.Println("matched")
+
+		// 		app.AppKubernetesIoInstance = d.ObjectMeta.Labels["app.kubernetes.io/instance"]
+		// 		app.AppKubernetesIoManagedBy = d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
+		// 		app.AppKubernetesIoName = d.ObjectMeta.Labels["app.kubernetes.io/name"]
+		// 		app.AppKubernetesIoPartOf = d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
+		// 		app.AppKubernetesIoVersion = d.ObjectMeta.Labels["app.kubernetes.io/version"]
+
+		// 		apps = append(apps, &app)
+		// 	}
+		// }
 	}
-	//}
 	return apps
 }
 

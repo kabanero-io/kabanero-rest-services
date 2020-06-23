@@ -156,19 +156,19 @@ func init() {
           "items": {
             "type": "object",
             "properties": {
-              "instance": {
+              "app.kubernetes.io/instance": {
                 "type": "string"
               },
-              "managedby": {
+              "app.kubernetes.io/managed-by": {
                 "type": "string"
               },
-              "name": {
+              "app.kubernetes.io/name": {
                 "type": "string"
               },
-              "partof": {
+              "app.kubernetes.io/part-of": {
                 "type": "string"
               },
-              "version": {
+              "app.kubernetes.io/version": {
                 "type": "string"
               }
             }
@@ -438,19 +438,19 @@ func init() {
     "DescribeStackAppsItems0": {
       "type": "object",
       "properties": {
-        "instance": {
+        "app.kubernetes.io/instance": {
           "type": "string"
         },
-        "managedby": {
+        "app.kubernetes.io/managed-by": {
           "type": "string"
         },
-        "name": {
+        "app.kubernetes.io/name": {
           "type": "string"
         },
-        "partof": {
+        "app.kubernetes.io/part-of": {
           "type": "string"
         },
-        "version": {
+        "app.kubernetes.io/version": {
           "type": "string"
         }
       }
