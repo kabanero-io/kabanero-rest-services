@@ -1,5 +1,5 @@
 consumes:
-- application/io.goswagger.examples.todo-list.v1+json
+  - application/io.goswagger.examples.todo-list.v1+json
 info:
   description: For the Kabanero REST service
   title: Kabanero REST API
@@ -14,7 +14,7 @@ definitions:
       message:
         type: string
         minLength: 1
-    
+
   KabaneroStack:
     type: object
     properties:
@@ -29,7 +29,7 @@ definitions:
               type: string
             version:
               type: string
-            digest check: 
+            digest check:
               type: string
             image digest:
               type: string
@@ -37,12 +37,11 @@ definitions:
               type: string
             image name:
               type: string
-            
-    
+
   DescribeStack:
     type: object
     properties:
-      name: 
+      name:
         type: string
       version:
         type: string
@@ -75,10 +74,9 @@ definitions:
               type: string
             app.kubernetes.io/version:
               type: string
-      
-            
-  # END stack related defs 
-  
+
+  # END stack related defs
+
   error:
     type: object
     required:
@@ -90,9 +88,8 @@ definitions:
       message:
         type: string
 
-        
 schemes:
-  - https
+  - http
 
 paths:
   /:
@@ -123,7 +120,6 @@ paths:
           description: standard message response
           schema:
             $ref: "#/definitions/message"
-              
 
   /v1/stacks:
     get:
@@ -134,7 +130,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/KabaneroStack'
+              $ref: "#/definitions/KabaneroStack"
         500:
           description: list stack error
           schema:
@@ -143,24 +139,24 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
-  
+
   /v1/describe/stacks/{stackName}/versions/{version}:
     get:
       operationId: describe
       parameters:
-      - name: stackName
-        in: path
-        type: string
-        required: true
-      - name: version
-        in: path
-        type: string
-        required: true
+        - name: stackName
+          in: path
+          type: string
+          required: true
+        - name: version
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: describe stack
           schema:
-            $ref: '#/definitions/DescribeStack'
+            $ref: "#/definitions/DescribeStack"
         500:
           description: describe stack error
           schema:
@@ -169,10 +165,8 @@ paths:
           description: error
           schema:
             $ref: "#/definitions/error"
-            
+
 produces:
-- application/io.goswagger.examples.todo-list.v1+json
-schemes:
-- http
+  - application/io.goswagger.examples.todo-list.v1+json
+
 swagger: "2.0"
-  
