@@ -41,7 +41,7 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 
 	api.MessageGetTestHandler = message.GetTestHandlerFunc(func(params message.GetTestParams) middleware.Responder {
 		fmt.Println("Entered MessageGetTestHandler!")
-		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("HIIIIIIIIIIIIXXXXX")})
+		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("Hi from the Test Handler!")})
 	})
 
 	api.MessageGetVersionHandler = message.GetVersionHandlerFunc(func(params message.GetVersionParams) middleware.Responder {
