@@ -1,5 +1,3 @@
 #!/bin/sh -e
 
 exec /usr/local/bin/kabanero-rest-services-server $@
-#exec /usr/local/bin/kabanero-rest-services-server --tls-host=$TLS_HOST --tls-port=$TLS_PORT $@
-#exec /usr/local/bin/kabanero-rest-services-server --host=$TLS_HOST --port=$TLS_PORT --tls-certificate=$TLS_CERTIFICATE -tls-key=$TLS_PRIVATE_KEY  $@

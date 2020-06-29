@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -22,10 +21,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	kabanerov1alpha2 "github.com/kabanero-io/kabanero-operator/pkg/apis/kabanero/v1alpha2"
 	"github.com/kabanero-io/kabanero-rest-services/models"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	runtimer "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -40,101 +37,6 @@ import (
 
 var log = logf.Log.WithName("utils/stack_functions")
 var myLogger logr.Logger = log.WithValues("Request.Namespace", "kabanero-rest-service", "Request.Name", "kabanero-rest-service")
-
-// -----------------------------------------------------------------------------------------------
-// Client struct
-// -----------------------------------------------------------------------------------------------
-type stackClient struct {
-	objs map[string]*kabanerov1alpha2.Stack
-}
-
-func (c stackClient) Get(ctx context.Context, key client.ObjectKey, obj runtimer.Object) error {
-	fmt.Printf("Received Get() for %v\n", key.Name)
-	u, ok := obj.(*kabanerov1alpha2.Stack)
-	if !ok {
-		fmt.Printf("Received invalid target object for get: %v\n", obj)
-		return errors.New("Get only supports stacks")
-	}
-	stack := c.objs[key.Name]
-	if stack == nil {
-		return apierrors.NewNotFound(schema.GroupResource{}, key.Name)
-	}
-	stack.DeepCopyInto(u)
-	return nil
-}
-
-func (c stackClient) List(ctx context.Context, list runtimer.Object, opts ...client.ListOption) error {
-	l, ok := list.(*kabanerov1alpha2.StackList)
-	if !ok {
-		fmt.Printf("Received an invalid list object: %v\n", list)
-		return errors.New("Get only supports stacks")
-	}
-
-	stackList := &kabanerov1alpha2.StackList{}
-	items := []kabanerov1alpha2.Stack{}
-	for _, stack := range c.objs {
-		items = append(items, *stack)
-	}
-
-	stackList.Items = items
-	stackList.DeepCopyInto(l)
-
-	return nil
-}
-
-func (c stackClient) Create(ctx context.Context, obj runtimer.Object, opts ...client.CreateOption) error {
-	u, ok := obj.(*kabanerov1alpha2.Stack)
-	if !ok {
-		fmt.Printf("Received invalid create: %v\n", obj)
-		return errors.New("Create only supports Stacks")
-	}
-
-	fmt.Printf("Received Create() for %v\n", u.Name)
-	stack := c.objs[u.Name]
-	if stack != nil {
-		fmt.Printf("Receive create object already exists: %v\n", u.Name)
-		return apierrors.NewAlreadyExists(schema.GroupResource{}, u.Name)
-	}
-
-	c.objs[u.Name] = u
-	return nil
-}
-
-func (c stackClient) Delete(ctx context.Context, obj runtimer.Object, opts ...client.DeleteOption) error {
-	u, ok := obj.(*kabanerov1alpha2.Stack)
-	if !ok {
-		fmt.Printf("Received an invalid delete object: %v\n", obj)
-		return errors.New("Update only supports Stack")
-	}
-
-	delete(c.objs, u.Name)
-	return nil
-}
-
-func (c stackClient) DeleteAllOf(ctx context.Context, obj runtimer.Object, opts ...client.DeleteAllOfOption) error {
-	return errors.New("DeleteAllOf is not supported")
-}
-
-func (c stackClient) Update(ctx context.Context, obj runtimer.Object, opts ...client.UpdateOption) error {
-	u, ok := obj.(*kabanerov1alpha2.Stack)
-	if !ok {
-		fmt.Printf("Received invalid update: %v\n", obj)
-		return errors.New("Update only supports Stack")
-	}
-
-	fmt.Printf("Received Update() for %v\n", u.Name)
-	stack := c.objs[u.Name]
-	if stack == nil {
-		fmt.Printf("Received update for object that does not exist: %v\n", obj)
-		return apierrors.NewNotFound(schema.GroupResource{}, u.Name)
-	}
-	c.objs[u.Name] = u
-	return nil
-}
-func (c stackClient) Status() client.StatusWriter { return c }
-func (c stackClient) Patch(ctx context.Context, obj runtimer.Object, patch client.Patch, opts ...client.PatchOption) error {
-	return errors.New("Patch is not supported")
-}
 
 func getHookNamespace() string {
 	ns := os.Getenv("KABANERO_CLI_NAMESPACE")
@@ -167,15 +69,20 @@ func resolveDockerConfRegKey(imgRegistry string) string {
 	return key
 }
 
-func getClientClient() client.Client {
+func getClientClient() (client.Client, error) {
 	cl, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
-	return cl
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	return cl, err
 }
 
 func getKabanero() (kabanerov1alpha2.Kabanero, error) {
+
+	var kabaneroInstance kabanerov1alpha2.Kabanero
 	kabUnstructured := &unstructured.Unstructured{}
 	kabUnstructured.SetKind("Kabanero")
 	kabUnstructured.SetGroupVersionKind(schema.GroupVersionKind{
@@ -185,18 +92,23 @@ func getKabanero() (kabanerov1alpha2.Kabanero, error) {
 	})
 
 	ctx := context.Background()
-	cl := getClientClient()
+	var err error
+	var cl client.Client
+	cl, err = getClientClient()
+	if err != nil {
+		return kabaneroInstance, err
+	}
 	ns := getHookNamespace()
 	n := types.NamespacedName{}
 	n.Name = ns
 	n.Namespace = ns
-	err := cl.Get(ctx, n, kabUnstructured)
+	err = cl.Get(ctx, n, kabUnstructured)
 
 	kabaneroBytes, err := kabUnstructured.MarshalJSON()
 	if err != nil {
-		panic(err.Error())
+		return kabaneroInstance, err
 	}
-	var kabaneroInstance kabanerov1alpha2.Kabanero
+
 	json.Unmarshal(kabaneroBytes, &kabaneroInstance)
 
 	return kabaneroInstance, err
@@ -212,9 +124,15 @@ func getStacks() (*unstructured.UnstructuredList, error) {
 	})
 
 	ctx := context.Background()
-	cl := getClientClient()
+
+	var err error
+	var cl client.Client
+	cl, err = getClientClient()
+	if err != nil {
+		return stacksUnstructured, err
+	}
 	ns := getHookNamespace()
-	err := cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
+	err = cl.List(ctx, stacksUnstructured, client.InNamespace(ns))
 
 	return stacksUnstructured, err
 }
@@ -223,14 +141,20 @@ func getDeployments(name string, version string, ns string) ([]*models.DescribeS
 	fmt.Println("entering deployments")
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 
 	// creates the clientset
 	clSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 
 	fmt.Println("namespace")
 	fmt.Println(ns)
@@ -238,8 +162,11 @@ func getDeployments(name string, version string, ns string) ([]*models.DescribeS
 	deploymentsClient := clSet.AppsV1().Deployments(ns)
 	list, err := deploymentsClient.List(metav1.ListOptions{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 	for _, d := range list.Items {
 		app := models.DescribeStackAppsItems0{}
 
@@ -268,31 +195,23 @@ func getDeployments(name string, version string, ns string) ([]*models.DescribeS
 	return apps, err
 }
 
-// when we get RBAC permissions then remove ns parm
-// iterate through target namespaces to scan for apps
-// using this stack
-func getApps(ns string, name string, version string) []*models.DescribeStackAppsItems0 {
+func getApps(ns string, name string, version string) ([]*models.DescribeStackAppsItems0, error) {
 	fmt.Println("in getApps():")
 	fmt.Println("name:")
 	fmt.Println(name)
 	fmt.Println("version:")
 	fmt.Println(version)
-	// config, err := rest.InClusterConfig()
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// creates the clientset
-	// clSet, err := kubernetes.NewForConfig(config)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
+
 	apps := []*models.DescribeStackAppsItems0{}
 
 	var targetnamespaceList []string
 	k, err := getKabanero()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	targetnamespaceList = k.Spec.TargetNamespaces
 
@@ -303,45 +222,16 @@ func getApps(ns string, name string, version string) []*models.DescribeStackApps
 	for _, nspace := range targetnamespaceList {
 		deployapps, err := getDeployments(name, version, nspace)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		for _, application := range deployapps {
-			apps = append(apps, application)
-		}
-		// fmt.Println("namespace")
-		// fmt.Println(ns)
-
-		// deploymentsClient := clSet.AppsV1().Deployments(ns)
-		// list, err := deploymentsClient.List(metav1.ListOptions{})
 		// if err != nil {
 		// 	panic(err)
 		// }
-		// for _, d := range list.Items {
-		// 	app := models.DescribeStackAppsItems0{}
-		// 	fmt.Printf(" * %s \n", d.Name)
-		// 	fmt.Println("labels")
-		// 	fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/id"])
-		// 	fmt.Println(d.ObjectMeta.Labels["stack.appsody.dev/version"])
-		// 	deployName := d.ObjectMeta.Labels["stack.appsody.dev/id"]
-		// 	deployVersion := d.ObjectMeta.Labels["stack.appsody.dev/version"]
-		// 	fmt.Println("deployName:")
-		// 	fmt.Println(deployName)
-		// 	fmt.Println("deployVersions:")
-		// 	fmt.Println(deployVersion)
-		// 	if deployName == name && deployVersion == version {
-		// 		fmt.Println("matched")
-
-		// 		app.AppKubernetesIoInstance = d.ObjectMeta.Labels["app.kubernetes.io/instance"]
-		// 		app.AppKubernetesIoManagedBy = d.ObjectMeta.Labels["app.kubernetes.io/managed-by"]
-		// 		app.AppKubernetesIoName = d.ObjectMeta.Labels["app.kubernetes.io/name"]
-		// 		app.AppKubernetesIoPartOf = d.ObjectMeta.Labels["app.kubernetes.io/part-of"]
-		// 		app.AppKubernetesIoVersion = d.ObjectMeta.Labels["app.kubernetes.io/version"]
-
-		// 		apps = append(apps, &app)
-		// 	}
-		// }
+		for _, application := range deployapps {
+			apps = append(apps, application)
+		}
 	}
-	return apps
+	return apps, err
 }
 
 // list all stacks in namespace
@@ -413,8 +303,11 @@ func DescribeStackFunc(name string, version string) (models.DescribeStack, error
 	for _, onestack := range stacksUnstructured.Items {
 		oneStackBytes, err := onestack.MarshalJSON()
 		if err != nil {
-			panic(err.Error())
+			return describeStack, err
 		}
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
 		var kabstack kabanerov1alpha2.Stack
 		json.Unmarshal(oneStackBytes, &kabstack)
 		nameFromStack := kabstack.GetName()
@@ -442,7 +335,10 @@ func DescribeStackFunc(name string, version string) (models.DescribeStack, error
 					describeStack.ImageDigest = crDigest
 					describeStack.DigestCheck = DigestCheck(stackDigest, crDigest, dStackStatusVersion.Status)
 					describeStack.Project = ns
-					apps := getApps(ns, name, version)
+					apps, err := getApps(ns, name, version)
+					if err != nil {
+						return describeStack, err
+					}
 					describeStack.Apps = apps
 					break
 				}
@@ -492,8 +388,11 @@ func retrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return "", err
 	}
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 	// creates the clientset
 	c, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -504,8 +403,11 @@ func retrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 	// annotationKey := "kabanero.io/docker-"
 	secretsList, err := c.CoreV1().Secrets(namespace).List(metav1.ListOptions{})
 	if err != nil {
-		panic(err)
+		return "", err
 	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 	var hostName string
 	var username []byte
 	var password []byte
@@ -516,8 +418,6 @@ func retrieveImageDigestFromContainerRegistry(namespace string, imgRegistry stri
 		if strings.Contains(hostName, "docker.io") {
 			username = secret.Data["username"]
 			password = secret.Data["password"]
-			//seccret = secret
-			//fmt.Printf(" * user: %s password: %s\n", username, password)
 			break
 		}
 	}
