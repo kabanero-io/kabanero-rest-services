@@ -56,3 +56,105 @@ func (o *DescribeOK) WriteResponse(rw http.ResponseWriter, producer runtime.Prod
 		}
 	}
 }
+
+// DescribeInternalServerErrorCode is the HTTP code returned for type DescribeInternalServerError
+const DescribeInternalServerErrorCode int = 500
+
+/*DescribeInternalServerError describe stack error
+
+swagger:response describeInternalServerError
+*/
+type DescribeInternalServerError struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Message `json:"body,omitempty"`
+}
+
+// NewDescribeInternalServerError creates DescribeInternalServerError with default headers values
+func NewDescribeInternalServerError() *DescribeInternalServerError {
+
+	return &DescribeInternalServerError{}
+}
+
+// WithPayload adds the payload to the describe internal server error response
+func (o *DescribeInternalServerError) WithPayload(payload *models.Message) *DescribeInternalServerError {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the describe internal server error response
+func (o *DescribeInternalServerError) SetPayload(payload *models.Message) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *DescribeInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(500)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}
+
+/*DescribeDefault error
+
+swagger:response describeDefault
+*/
+type DescribeDefault struct {
+	_statusCode int
+
+	/*
+	  In: Body
+	*/
+	Payload *models.Error `json:"body,omitempty"`
+}
+
+// NewDescribeDefault creates DescribeDefault with default headers values
+func NewDescribeDefault(code int) *DescribeDefault {
+	if code <= 0 {
+		code = 500
+	}
+
+	return &DescribeDefault{
+		_statusCode: code,
+	}
+}
+
+// WithStatusCode adds the status to the describe default response
+func (o *DescribeDefault) WithStatusCode(code int) *DescribeDefault {
+	o._statusCode = code
+	return o
+}
+
+// SetStatusCode sets the status to the describe default response
+func (o *DescribeDefault) SetStatusCode(code int) {
+	o._statusCode = code
+}
+
+// WithPayload adds the payload to the describe default response
+func (o *DescribeDefault) WithPayload(payload *models.Error) *DescribeDefault {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the describe default response
+func (o *DescribeDefault) SetPayload(payload *models.Error) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *DescribeDefault) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(o._statusCode)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
+}

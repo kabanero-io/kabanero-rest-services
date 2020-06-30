@@ -15,7 +15,7 @@ import (
 
 // KabaneroStack kabanero stack
 //
-// swagger:model kabaneroStack
+// swagger:model KabaneroStack
 type KabaneroStack struct {
 
 	// name
@@ -92,6 +92,9 @@ type KabaneroStackStatusItems0 struct {
 
 	// image digest
 	ImageDigest string `json:"image digest,omitempty"`
+
+	// image name
+	ImageName string `json:"image name,omitempty"`
 
 	// kabanero digest
 	KabaneroDigest string `json:"kabanero digest,omitempty"`

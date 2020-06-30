@@ -49,33 +49,6 @@ func init() {
         }
       }
     },
-    "/login": {
-      "post": {
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/credentials"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "login successful",
-            "schema": {
-              "$ref": "#/definitions/jwt"
-            }
-          },
-          "default": {
-            "description": "error",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      }
-    },
     "/test": {
       "get": {
         "tags": [
@@ -112,20 +85,13 @@ func init() {
           "200": {
             "description": "describe stack",
             "schema": {
-              "$ref": "#/definitions/describeStack"
+              "$ref": "#/definitions/DescribeStack"
             }
-          }
-        }
-      }
-    },
-    "/v1/stacks": {
-      "get": {
-        "operationId": "list",
-        "responses": {
-          "201": {
-            "description": "login successful",
+          },
+          "500": {
+            "description": "describe stack error",
             "schema": {
-              "$ref": "#/definitions/stacksList"
+              "$ref": "#/definitions/message"
             }
           },
           "default": {
@@ -136,78 +102,88 @@ func init() {
           }
         }
       }
-    }
-  },
-  "definitions": {
-    "commonStack": {
-      "type": "object",
-      "properties": {
-        "exception message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "versions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "images": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "image": {
-                      "type": "string"
-                    }
-                  }
-                }
-              },
-              "reponame": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
+    },
+    "/v1/stacks": {
+      "get": {
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "list successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/KabaneroStack"
               }
+            }
+          },
+          "500": {
+            "description": "list stack error",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
             }
           }
         }
       }
     },
-    "credentials": {
-      "type": "object",
-      "required": [
-        "gituser",
-        "gitpat"
-      ],
-      "properties": {
-        "gitpat": {
-          "type": "string",
-          "minLength": 1
-        },
-        "gituser": {
-          "type": "string",
-          "minLength": 1
+    "/version": {
+      "get": {
+        "tags": [
+          "message"
+        ],
+        "responses": {
+          "200": {
+            "description": "standard message response",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
         }
       }
-    },
-    "describeStack": {
+    }
+  },
+  "definitions": {
+    "DescribeStack": {
       "type": "object",
       "properties": {
-        "digest check": {
-          "type": "string"
+        "apps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "app.kubernetes.io/instance": {
+                "type": "string"
+              },
+              "app.kubernetes.io/managed-by": {
+                "type": "string"
+              },
+              "app.kubernetes.io/name": {
+                "type": "string"
+              },
+              "app.kubernetes.io/part-of": {
+                "type": "string"
+              },
+              "app.kubernetes.io/version": {
+                "type": "string"
+              }
+            }
+          }
         },
-        "git repo url": {
+        "digest check": {
           "type": "string"
         },
         "image": {
           "type": "string"
         },
         "image digest": {
+          "type": "string"
+        },
+        "image name": {
           "type": "string"
         },
         "kabanero digest": {
@@ -227,31 +203,7 @@ func init() {
         }
       }
     },
-    "error": {
-      "type": "object",
-      "required": [
-        "message"
-      ],
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "jwt": {
-      "type": "object",
-      "properties": {
-        "jwt": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
-    "kabaneroStack": {
+    "KabaneroStack": {
       "type": "object",
       "properties": {
         "name": {
@@ -268,6 +220,9 @@ func init() {
               "image digest": {
                 "type": "string"
               },
+              "image name": {
+                "type": "string"
+              },
               "kabanero digest": {
                 "type": "string"
               },
@@ -282,6 +237,21 @@ func init() {
         }
       }
     },
+    "error": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "message": {
       "type": "object",
       "required": [
@@ -291,55 +261,6 @@ func init() {
         "message": {
           "type": "string",
           "minLength": 1
-        }
-      }
-    },
-    "stacksList": {
-      "type": "object",
-      "properties": {
-        "activate stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "kabanero stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/kabaneroStack"
-          }
-        },
-        "new curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "obsolete stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "url": {
-                "type": "string"
-              }
-            }
-          }
         }
       }
     }
@@ -377,33 +298,6 @@ func init() {
         }
       }
     },
-    "/login": {
-      "post": {
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/credentials"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "login successful",
-            "schema": {
-              "$ref": "#/definitions/jwt"
-            }
-          },
-          "default": {
-            "description": "error",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      }
-    },
     "/test": {
       "get": {
         "tags": [
@@ -440,20 +334,13 @@ func init() {
           "200": {
             "description": "describe stack",
             "schema": {
-              "$ref": "#/definitions/describeStack"
+              "$ref": "#/definitions/DescribeStack"
             }
-          }
-        }
-      }
-    },
-    "/v1/stacks": {
-      "get": {
-        "operationId": "list",
-        "responses": {
-          "201": {
-            "description": "login successful",
+          },
+          "500": {
+            "description": "describe stack error",
             "schema": {
-              "$ref": "#/definitions/stacksList"
+              "$ref": "#/definitions/message"
             }
           },
           "default": {
@@ -464,19 +351,83 @@ func init() {
           }
         }
       }
+    },
+    "/v1/stacks": {
+      "get": {
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "list successful",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/KabaneroStack"
+              }
+            }
+          },
+          "500": {
+            "description": "list stack error",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          },
+          "default": {
+            "description": "error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "message"
+        ],
+        "responses": {
+          "200": {
+            "description": "standard message response",
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
-    "CommonStackVersionsItems0": {
+    "DescribeStack": {
       "type": "object",
       "properties": {
-        "images": {
+        "apps": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CommonStackVersionsItems0ImagesItems0"
+            "$ref": "#/definitions/DescribeStackAppsItems0"
           }
         },
-        "reponame": {
+        "digest check": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "image digest": {
+          "type": "string"
+        },
+        "image name": {
+          "type": "string"
+        },
+        "kabanero digest": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "status": {
           "type": "string"
         },
         "version": {
@@ -484,11 +435,37 @@ func init() {
         }
       }
     },
-    "CommonStackVersionsItems0ImagesItems0": {
+    "DescribeStackAppsItems0": {
       "type": "object",
       "properties": {
-        "image": {
+        "app.kubernetes.io/instance": {
           "type": "string"
+        },
+        "app.kubernetes.io/managed-by": {
+          "type": "string"
+        },
+        "app.kubernetes.io/name": {
+          "type": "string"
+        },
+        "app.kubernetes.io/part-of": {
+          "type": "string"
+        },
+        "app.kubernetes.io/version": {
+          "type": "string"
+        }
+      }
+    },
+    "KabaneroStack": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KabaneroStackStatusItems0"
+          }
         }
       }
     },
@@ -501,87 +478,10 @@ func init() {
         "image digest": {
           "type": "string"
         },
-        "kabanero digest": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        }
-      }
-    },
-    "StacksListRepositoriesItems0": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "commonStack": {
-      "type": "object",
-      "properties": {
-        "exception message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "versions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CommonStackVersionsItems0"
-          }
-        }
-      }
-    },
-    "credentials": {
-      "type": "object",
-      "required": [
-        "gituser",
-        "gitpat"
-      ],
-      "properties": {
-        "gitpat": {
-          "type": "string",
-          "minLength": 1
-        },
-        "gituser": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
-    "describeStack": {
-      "type": "object",
-      "properties": {
-        "digest check": {
-          "type": "string"
-        },
-        "git repo url": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string"
-        },
-        "image digest": {
+        "image name": {
           "type": "string"
         },
         "kabanero digest": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "project": {
           "type": "string"
         },
         "status": {
@@ -607,29 +507,6 @@ func init() {
         }
       }
     },
-    "jwt": {
-      "type": "object",
-      "properties": {
-        "jwt": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
-    "kabaneroStack": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "status": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/KabaneroStackStatusItems0"
-          }
-        }
-      }
-    },
     "message": {
       "type": "object",
       "required": [
@@ -639,47 +516,6 @@ func init() {
         "message": {
           "type": "string",
           "minLength": 1
-        }
-      }
-    },
-    "stacksList": {
-      "type": "object",
-      "properties": {
-        "activate stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "kabanero stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/kabaneroStack"
-          }
-        },
-        "new curated stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "obsolete stacks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/commonStack"
-          }
-        },
-        "repositories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/StacksListRepositoriesItems0"
-          }
         }
       }
     }

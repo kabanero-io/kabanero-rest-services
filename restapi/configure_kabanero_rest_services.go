@@ -4,6 +4,7 @@ package restapi
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/swag"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/kabanero-io/kabanero-rest-services/models"
+	"github.com/kabanero-io/kabanero-rest-services/pkg/utils"
 	"github.com/kabanero-io/kabanero-rest-services/restapi/operations"
 	"github.com/kabanero-io/kabanero-rest-services/restapi/operations/message"
 )
@@ -38,7 +40,12 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.MessageGetTestHandler = message.GetTestHandlerFunc(func(params message.GetTestParams) middleware.Responder {
-		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("HIIIIIIIIIIII")})
+		fmt.Println("Entered MessageGetTestHandler!")
+		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("Hi from the Test Handler!")})
+	})
+
+	api.MessageGetVersionHandler = message.GetVersionHandlerFunc(func(params message.GetVersionParams) middleware.Responder {
+		return message.NewGetOK().WithPayload(&models.Message{Message: swag.String("Kabanero Rest Services: version 0.11")})
 	})
 
 	if api.MessageGetHandler == nil {
@@ -46,6 +53,24 @@ func configureAPI(api *operations.KabaneroRestServicesAPI) http.Handler {
 			return middleware.NotImplemented("operation message.Get has not yet been implemented")
 		})
 	}
+
+	api.DescribeHandler = operations.DescribeHandlerFunc(func(params operations.DescribeParams) middleware.Responder {
+		fmt.Println("Entered DescribeHandler!")
+		describeStack, err := utils.DescribeStackFunc(params.StackName, params.Version)
+		if err != nil {
+			return operations.NewDescribeInternalServerError().WithPayload(&models.Message{Message: swag.String("Error occured during describe processing: " + err.Error())})
+		}
+		return operations.NewDescribeOK().WithPayload(&describeStack)
+	})
+
+	api.ListHandler = operations.ListHandlerFunc(func(params operations.ListParams) middleware.Responder {
+		fmt.Println("Entered ListHandler!")
+		listOfStacks, err := utils.ListStacksFunc()
+		if err != nil {
+			return operations.NewListInternalServerError().WithPayload(&models.Message{Message: swag.String("Error occured during list processing: " + err.Error())})
+		}
+		return operations.NewListOK().WithPayload(listOfStacks)
+	})
 
 	api.PreServerShutdown = func() {}
 

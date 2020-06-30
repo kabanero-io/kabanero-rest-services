@@ -6,26 +6,32 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
 
 // DescribeStack describe stack
 //
-// swagger:model describeStack
+// swagger:model DescribeStack
 type DescribeStack struct {
+
+	// apps
+	Apps []*DescribeStackAppsItems0 `json:"apps"`
 
 	// digest check
 	DigestCheck string `json:"digest check,omitempty"`
-
-	// git repo url
-	GitRepoURL string `json:"git repo url,omitempty"`
 
 	// image
 	Image string `json:"image,omitempty"`
 
 	// image digest
 	ImageDigest string `json:"image digest,omitempty"`
+
+	// image name
+	ImageName string `json:"image name,omitempty"`
 
 	// kabanero digest
 	KabaneroDigest string `json:"kabanero digest,omitempty"`
@@ -45,6 +51,40 @@ type DescribeStack struct {
 
 // Validate validates this describe stack
 func (m *DescribeStack) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateApps(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *DescribeStack) validateApps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Apps) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Apps); i++ {
+		if swag.IsZero(m.Apps[i]) { // not required
+			continue
+		}
+
+		if m.Apps[i] != nil {
+			if err := m.Apps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("apps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 
@@ -59,6 +99,50 @@ func (m *DescribeStack) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *DescribeStack) UnmarshalBinary(b []byte) error {
 	var res DescribeStack
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*m = res
+	return nil
+}
+
+// DescribeStackAppsItems0 describe stack apps items0
+//
+// swagger:model DescribeStackAppsItems0
+type DescribeStackAppsItems0 struct {
+
+	// app kubernetes io instance
+	AppKubernetesIoInstance string `json:"app.kubernetes.io/instance,omitempty"`
+
+	// app kubernetes io managed by
+	AppKubernetesIoManagedBy string `json:"app.kubernetes.io/managed-by,omitempty"`
+
+	// app kubernetes io name
+	AppKubernetesIoName string `json:"app.kubernetes.io/name,omitempty"`
+
+	// app kubernetes io part of
+	AppKubernetesIoPartOf string `json:"app.kubernetes.io/part-of,omitempty"`
+
+	// app kubernetes io version
+	AppKubernetesIoVersion string `json:"app.kubernetes.io/version,omitempty"`
+}
+
+// Validate validates this describe stack apps items0
+func (m *DescribeStackAppsItems0) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (m *DescribeStackAppsItems0) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(m)
+}
+
+// UnmarshalBinary interface implementation
+func (m *DescribeStackAppsItems0) UnmarshalBinary(b []byte) error {
+	var res DescribeStackAppsItems0
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

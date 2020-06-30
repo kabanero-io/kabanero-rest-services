@@ -1,5 +1,5 @@
 consumes:
-- application/io.goswagger.examples.todo-list.v1+json
+  - application/io.goswagger.examples.todo-list.v1+json
 info:
   description: For the Kabanero REST service
   title: Kabanero REST API
@@ -14,56 +14,8 @@ definitions:
       message:
         type: string
         minLength: 1
-  
-  # login defs
-  credentials:
-    type: object
-    required: 
-      - gituser
-      - gitpat
-    properties:
-      gituser:
-        type: string
-        minLength: 1
-      gitpat:
-        type: string
-        minLength: 1
-  jwt:
-    type: object
-    properties:
-      jwt:
-        type: string
-        minLength: 1
-  # END login defs 
-        
-  # stack related defs
-  commonStack:
-    type:  object
-    properties:
-      name: 
-        type: string
-      versions:
-        type: array
-        items:
-          type: object
-          properties:
-            reponame:
-              type: string
-            version:
-              type: string
-            images:
-              type: array
-              items:
-                type: object
-                properties:
-                  image:
-                    type: string
-      status:
-        type: string
-      exception message:
-        type: string 
-    
-  kabaneroStack:
+
+  KabaneroStack:
     type: object
     properties:
       name:
@@ -77,56 +29,23 @@ definitions:
               type: string
             version:
               type: string
-            digest check: 
+            digest check:
               type: string
             image digest:
               type: string
             kabanero digest:
               type: string
-    
-  stacksList:
+            image name:
+              type: string
+
+  DescribeStack:
     type: object
     properties:
-      new curated stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      activate stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      kabanero stacks:
-        type: array
-        items:
-          $ref: '#/definitions/kabaneroStack'
-      obsolete stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      curated stacks:
-        type: array
-        items:
-          $ref: '#/definitions/commonStack'
-      repositories:
-        type: array
-        items:
-          type: object
-          properties:
-            name:
-              type: string
-            url:
-              type: string
-    
-  describeStack:
-    type: object
-    properties:
-      name: 
+      name:
         type: string
       version:
         type: string
       project:
-        type: string
-      git repo url:
         type: string
       image:
         type: string
@@ -138,9 +57,26 @@ definitions:
         type: string
       kabanero digest:
         type: string
-            
-  # END stack related defs 
-  
+      image name:
+        type: string
+      apps:
+        type: array
+        items:
+          type: object
+          properties:
+            app.kubernetes.io/instance:
+              type: string
+            app.kubernetes.io/managed-by:
+              type: string
+            app.kubernetes.io/name:
+              type: string
+            app.kubernetes.io/part-of:
+              type: string
+            app.kubernetes.io/version:
+              type: string
+
+  # END stack related defs
+
   error:
     type: object
     required:
@@ -152,6 +88,8 @@ definitions:
       message:
         type: string
 
+schemes:
+  - http
 
 paths:
   /:
@@ -172,60 +110,63 @@ paths:
           description: standard message response
           schema:
             $ref: "#/definitions/message"
-              
-  /login:
-    post:
-      parameters:
-        - name: body
-          in: body
-          schema:
-            $ref: '#/definitions/credentials'
+
+  /version:
+    get:
+      tags:
+        - message
       responses:
-        201:
-          description: login successful
+        200:
+          description: standard message response
           schema:
-            $ref: '#/definitions/jwt'
-        default:
-          description: error
-          schema:
-            $ref: "#/definitions/error"
+            $ref: "#/definitions/message"
+
   /v1/stacks:
     get:
       operationId: list
       responses:
-        201:
-          description: login successful
+        200:
+          description: list successful
           schema:
-            $ref: '#/definitions/stacksList'
+            type: array
+            items:
+              $ref: "#/definitions/KabaneroStack"
+        500:
+          description: list stack error
+          schema:
+            $ref: "#/definitions/message"
         default:
           description: error
           schema:
             $ref: "#/definitions/error"
-  
+
   /v1/describe/stacks/{stackName}/versions/{version}:
     get:
       operationId: describe
       parameters:
-      - in: path
-        name: stackName
-        type: string
-        required: true
-      - in: path
-        name: version
-        type: string
-        required: true
+        - name: stackName
+          in: path
+          type: string
+          required: true
+        - name: version
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: describe stack
           schema:
-            $ref: '#/definitions/describeStack'
-          
-      
-  
-  
+            $ref: "#/definitions/DescribeStack"
+        500:
+          description: describe stack error
+          schema:
+            $ref: "#/definitions/message"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+
 produces:
-- application/io.goswagger.examples.todo-list.v1+json
-schemes:
-- http
+  - application/io.goswagger.examples.todo-list.v1+json
+
 swagger: "2.0"
-  

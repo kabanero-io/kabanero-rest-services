@@ -26,7 +26,7 @@ build-image:
 	$(info    TRAVIS_TAG is $(TRAVIS_TAG))
 	$(info    TRAVIS_REPO_SLUG is $(TRAVIS_REPO_SLUG))
 	$(info    TRAVIS_BRANCH is $(TRAVIS_BRANCH))
-	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -o build/_output/bin/kabanero-rest-services/main -gcflags "all=-trimpath=$(GOPATH)" -asmflags "all=-trimpath=$(GOPATH)" -ldflags "-X main.GitBranch=$(TRAVIS_BRANCH) -X main.GitTag=$(TRAVIS_TAG) -X main.GitCommit=$(TRAVIS_COMMIT) -X main.GitRepoSlug='kabanero-io/kabanero-rest-services' -X main.BuildDate=`date -u +%Y%m%d.%H%M%S`" github.com/kabanero-io/kabanero-rest-services/pkg/cmd/main
+#	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -o build/_output/bin/kabanero-rest-services/main -gcflags "all=-trimpath=$(GOPATH)" -asmflags "all=-trimpath=$(GOPATH)" -ldflags "-X main.GitBranch=$(TRAVIS_BRANCH) -X main.GitTag=$(TRAVIS_TAG) -X main.GitCommit=$(TRAVIS_COMMIT) -X main.GitRepoSlug='kabanero-io/kabanero-rest-services' -X main.BuildDate=`date -u +%Y%m%d.%H%M%S`" github.com/$(TRAVIS_REPO_SLUG)/cmd/kabanero-rest-services-server/main
 	docker build -f build/Dockerfile -t ${IMAGE} .
 
   	
@@ -35,6 +35,7 @@ push-image:
 ifneq "$(IMAGE)" "kabanero-rest-services:latest"
   # Default push.  Make sure the namespace is there in case using local registry
 #	kubectl create namespace kabanero || true
+	$(info    IMAGE is $(IMAGE))
 	docker push $(IMAGE)
 
 ifdef TRAVIS_TAG

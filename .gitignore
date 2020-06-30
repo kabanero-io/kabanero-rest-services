@@ -1,0 +1,6 @@
+bin/main
+build/bin/main
+build/_output/bin/kabanero-rest-services/main
+build/bin/kabanero-rest-services-server
+kabanero-rest-services-server
+
